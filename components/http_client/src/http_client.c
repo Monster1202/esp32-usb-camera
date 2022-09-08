@@ -799,6 +799,10 @@ void http_test_task(void *buffer)
 {
     uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     assert(lcd_buffer != NULL);
+    while(1)
+        http_perform_as_stream_reader(buffer,lcd_buffer);
+        
+}
     //ESP_LOGI(TAG, "&buffer:%d",buffer);
     //vTaskDelay(5000 / portTICK_PERIOD_MS);
 //    get_face_jpg();
@@ -817,8 +821,7 @@ void http_test_task(void *buffer)
 //     https_with_hostname_path();
 //     http_redirect_to_https();
     //http_download_chunk();
-    while(1)
-        http_perform_as_stream_reader(buffer,lcd_buffer);
+
     // https_async();
     // https_with_invalid_url();
 //     http_native_request();
@@ -826,7 +829,7 @@ void http_test_task(void *buffer)
     
     //ESP_LOGI(TAG, "Finish http example");
     //vTaskDelete(NULL);
-}
+
 
 // void app_main(void)
 // {

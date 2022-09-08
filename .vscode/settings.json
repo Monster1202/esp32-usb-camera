@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "tca9554.h": "c",
-        "jpegd2.h": "c"
+        "jpegd2.h": "c",
+        "usb_camera.h": "c"
     },
     "idf.adapterTargetName": "esp32s3",
     "idf.flashType": "UART",

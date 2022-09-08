@@ -227,6 +227,10 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
     cinfo.dct_method = JDCT_IFAST;
     cinfo.do_fancy_upsampling = 0;
     cinfo.out_color_space = JCS_RGB;
+    // cinfo.image_width = 400;
+    // cinfo.image_height = 300;
+     cinfo.scale_num = 1;
+     cinfo.scale_denom = 1;    
     /* Step 5: Start decompressor */
 
     (void) jpeg_start_decompress(&cinfo);
@@ -251,8 +255,8 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
     /* Here we use the library's state variable cinfo.output_scanline as the
      * loop counter, so that we don't have to keep track ourselves.
      *///
-     //image_width
-     printf("w=%d, h=%d\n", cinfo.output_width, cinfo.output_height);
+
+     //printf("w=%d, h=%d\n", cinfo.output_width, cinfo.output_height);
 
     while (cinfo.output_scanline < cinfo.output_height) {
         /* jpeg_read_scanlines expects an array of pointers to scanlines.
@@ -287,6 +291,7 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
 
         if(!(y % CONFIG_LCD_BUF_HIGHT) || index_last >= (CONFIG_LCD_BUF_HIGHT*cinfo.output_width)){
             lcd_cb(0, y-CONFIG_LCD_BUF_HIGHT, CONFIG_LCD_BUF_WIDTH, CONFIG_LCD_BUF_HIGHT, outbuffer);
+            //printf("y=%d, index_last=%d\n", y, index_last);
             index_last = 0;
         }
 

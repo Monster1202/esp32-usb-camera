@@ -32,9 +32,14 @@ esp_err_t bsp_lcd_init(void)
     ESP_ERROR_CHECK(tca9554_init());
     ext_io_t io_conf = BSP_EXT_IO_DEFAULT_CONFIG();
     ext_io_t io_level = BSP_EXT_IO_DEFAULT_LEVEL();
-    // io_level.lcd_bl = 1;        //turn on backlight
+     //io_level.lcd_bl = 1;        //turn on backlight
+
     ESP_ERROR_CHECK(tca9554_set_configuration(io_conf.val));
     ESP_ERROR_CHECK(tca9554_write_output_pins(io_level.val));
+    //  io_level.ext_io0 = 0;
+    //  io_level.ext_io1 = 0;
+    // ESP_ERROR_CHECK(tca9554_write_output_pins(io_level.ext_io0));
+    // ESP_ERROR_CHECK(tca9554_write_output_pins(io_level.ext_io1));
 
     /* Pullup LCD RD */
     gpio_pad_select_gpio(GPIO_LCD_RD);

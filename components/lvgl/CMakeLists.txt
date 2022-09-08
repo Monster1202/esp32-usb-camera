@@ -66,6 +66,8 @@ idf_component_register(
         "demos/widgets"
         "demos/widgets/assets"
         "user"
+        "examples"
+        "examples/get_started"
     INCLUDE_DIRS
         "."
         "src/core"
@@ -113,6 +115,8 @@ idf_component_register(
         "demos/widgets"
         "demos/widgets/assets"
         "user"
+        "examples"
+        "examples/get_started"
     REQUIRES
         bsp
         driver

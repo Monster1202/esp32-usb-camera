@@ -9,8 +9,8 @@ extern "C" {
 #endif
 
 
-#define CONFIG_LCD_BUF_WIDTH 320
-#define CONFIG_LCD_BUF_HIGHT 48
+#define CONFIG_LCD_BUF_WIDTH 640
+#define CONFIG_LCD_BUF_HIGHT 48  //48
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
 /* USB Camera Descriptors Related MACROS,
 the quick demo skip the standred get descriptors process,
