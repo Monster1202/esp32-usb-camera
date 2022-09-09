@@ -8,6 +8,7 @@ set(EXTRA_COMPONENT_DIRS
     components/usb
     components/http_client
     components/lvgl
+    components/mqtt_app
     )
 add_compile_options(-fdiagnostics-color=always)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

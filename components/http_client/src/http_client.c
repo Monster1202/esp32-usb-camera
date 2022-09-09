@@ -745,6 +745,7 @@ static void http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         free(buffer);
+        vTaskDelay(5000 / portTICK_RATE_MS); 
         return;
     }
     int content_length =  esp_http_client_fetch_headers(client);
@@ -800,7 +801,10 @@ void http_test_task(void *buffer)
     uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     assert(lcd_buffer != NULL);
     while(1)
+    {
         http_perform_as_stream_reader(buffer,lcd_buffer);
+    }
+        
         
 }
     //ESP_LOGI(TAG, "&buffer:%d",buffer);
