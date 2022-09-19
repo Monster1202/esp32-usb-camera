@@ -158,13 +158,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
-    char *broker_url = {0};
-    broker_url = parameter_read_broker_url();
-    printf("parameter_read_broker_url:%s",broker_url); 
+    // char *broker_url = {0};
+    // broker_url = parameter_read_broker_url();
+    // printf("parameter_read_broker_url:%s",broker_url); 
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .uri = MQTT_BROKER_URL,//CONFIG_BROKER_URL,  broker_url,//
-        //.task_prio = MQTT_PRIO,
+        .task_prio = 5,//MQTT_PRIO,
     };
     //strcpy(mqtt_cfg.uri,broker_url);
     //esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);

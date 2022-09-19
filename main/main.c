@@ -41,11 +41,19 @@
 // #include "lv_examples.h"
 
 static const char *TAG = "main";
+void Task1( void *pvParameters );
+
+void Task1(void *pvParameters) {
+  while(1)
+  {
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGD(TAG,"PRO_CPU正在运行：");
+    ESP_LOGD(TAG,"xPortGetCoreID:%d",xPortGetCoreID());
+  }
+}
 
 
-
-
-#define BOOT_ANIMATION_MAX_SIZE (80 * 1024)
+#define BOOT_ANIMATION_MAX_SIZE (65 * 1024)  //80 will cause mqtt init error 
 //esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x_start, int y_start, int x_end, int y_end, const void *color_data)
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data)
 {
@@ -64,12 +72,12 @@ void app_main(void)
     /* Initialize LCD */
     ESP_ERROR_CHECK(bsp_lcd_init());
     lcd_clear_fast(lcd_panel, COLOR_BLACK);
- 
+    lcd_draw_picture_test(lcd_panel);
     /* malloc a buffer for RGB565 data, as 320*240*2 = 153600B,
     here malloc a smaller buffer refresh lcd with steps */
     // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     // assert(lcd_buffer != NULL);
-
+    //xTaskCreatePinnedToCore(Task1, "Task1", 10000, NULL, 1, NULL,  0);
     /* Boot animation useful for LCD checking and camera power-on waiting, But consumes much flash */
 #if 1
     esp_vfs_spiffs_conf_t spiffs_config = {
@@ -104,7 +112,8 @@ void app_main(void)
     gpio_init();
     wifi_connect();
     
-    xTaskCreate(&http_test_task, "http_test_task", BOOT_ANIMATION_MAX_SIZE, (void *)(jpeg_buf), 5, NULL);
+    xTaskCreate(&http_test_task, "http_test_task", BOOT_ANIMATION_MAX_SIZE, (void *)(jpeg_buf), 6, NULL);
+    
     mqtt_init();
     //lvgl_init();
     //uint8_t s_led_state = 0;
@@ -200,6 +209,7 @@ void app_main(void)
 //     //gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
 
 //     ESP_LOGI(TAG, "Minimum free heap size: %d bytes", esp_get_minimum_free_heap_size());
+
 
 // }
 
