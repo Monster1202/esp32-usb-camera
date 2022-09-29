@@ -164,7 +164,7 @@ static void jpeg_filerw_src_init(j_decompress_ptr cinfo)
  * Sample routine for JPEG decompression.  We assume that the source file name
  * is passed in.  We want to return 1 on success, 0 on error.
  */
-void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb)
+uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb)
 {
     /* This struct contains the JPEG decompression parameters and pointers to
      * working space (which is allocated as needed by the JPEG library).
@@ -292,6 +292,8 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
         if(!(y % CONFIG_LCD_BUF_HIGHT) || index_last >= (CONFIG_LCD_BUF_HIGHT*cinfo.output_width)){
             lcd_cb(0, y-CONFIG_LCD_BUF_HIGHT, CONFIG_LCD_BUF_WIDTH, CONFIG_LCD_BUF_HIGHT, outbuffer);
             //printf("y=%d, index_last=%d\n", y, index_last);
+            //frame_send(y,outbuffer);
+            
             index_last = 0;
         }
 
@@ -308,4 +310,5 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
 
     /* This is an important step since it will release a good deal of memory. */
     jpeg_destroy_decompress(&cinfo);
+    return 0;
 }

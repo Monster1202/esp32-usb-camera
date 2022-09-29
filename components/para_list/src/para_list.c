@@ -20,6 +20,7 @@ esp_err_t get_chip_id(uint32_t* chip_id){
     esp_err_t status = ESP_OK;
     *chip_id = (REG_READ(0x3FF00050) & 0xFF000000) |
                          (REG_READ(0x3ff0005C) & 0xFFFFFF);
+
     return status;
 }
 
@@ -47,10 +48,21 @@ void wifi_url_inital_set_para(void)
 
 void para_init(void)
 {
-    uint32_t id;
-    get_chip_id(&id);
-    printf("SDK version:%s,chip id:%u\n", esp_get_idf_version(),id);
-
+    // uint32_t id;
+    // get_chip_id(&id);
+    // printf("SDK version:%s,chip id:%u\n", esp_get_idf_version(),id);
+    static char mac_addr[6] = {0};
+    esp_err_t ret =  esp_efuse_mac_get_default((uint8_t *)mac_addr);  //esp_read_mac  esp_efuse_mac_get_default
+    if (ret != ESP_OK) 
+        printf("esp_efuse_mac_get_default failed\n");
+    else{
+        printf("mac_addr:");
+        for(uint8_t i = 0; i<6; i++)
+            printf("%x",mac_addr[i]);
+        printf("\r\n");
+    }
+            
+                            
     // strcpy(connection_para.wifi_ssid,"CLEANING-SYSTEM");
     // strcpy(connection_para.wifi_pass,"12345678");
     // strcpy(connection_para.broker_url,"mqtt://10.42.0.1");
@@ -59,7 +71,7 @@ void para_init(void)
         printf("flash_read_parameter error");
 
     #ifdef DEVICE_TYPE_BRUSH
-        brush_para.uuid = id;
+        //brush_para.uuid = id;
         brush_para.nozzle = 0;
         brush_para.centralizer = 0;
         brush_para.rotation = 0;
@@ -76,7 +88,7 @@ void para_init(void)
         brush_para.wifi_connection = 0;
     #else
         #ifdef DEVICE_TYPE_BLISTER
-            blister_para.uuid = id;
+            //blister_para.uuid = id;
             blister_para.mode = 0;
             blister_para.heater = 0;
             blister_para.status = 1;
@@ -92,7 +104,8 @@ void para_init(void)
             blister_para.rssi = 0;
             blister_para.wifi_connection = 0;
         #else
-            remote_para.uuid = id;
+            //remote_para.uuid = id;
+            strcpy(remote_para.uuid,mac_addr);
             remote_para.nozzle = 0;
             remote_para.centralizer = 0;
             remote_para.rotation = 0;

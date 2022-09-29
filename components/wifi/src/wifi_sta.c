@@ -17,10 +17,10 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID "CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  "yyg"//
-#define EXAMPLE_ESP_WIFI_PASS "12345678"//"shkj1234."  //CONFIG_ESP_WIFI_PASSWORD  "12345678"//
+#define EXAMPLE_ESP_WIFI_SSID "CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  ////
+#define EXAMPLE_ESP_WIFI_PASS "12345678"//"shkj1234."  //CONFIG_ESP_WIFI_PASSWORD  //
 
-#define EXAMPLE_ESP_MAXIMUM_RETRY  400000//CONFIG_ESP_MAXIMUM_RETRY
+#define EXAMPLE_ESP_MAXIMUM_RETRY  150//CONFIG_ESP_MAXIMUM_RETRY
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -50,7 +50,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             ESP_LOGI(TAG, "retry to connect to the AP");
         } 
         else if(s_retry_num >= EXAMPLE_ESP_MAXIMUM_RETRY){
-            wifi_reset();
+            //wifi_reset();
+            esp_restart();
             ESP_LOGI(TAG, "reset STA");
             s_retry_num = 1;
         }

@@ -17,8 +17,8 @@ extern "C" {
 
 
 #define BACKUP_MQTT_BROKER_URL     "mqtt://10.42.0.1"    
-#define BACKUP_EXAMPLE_ESP_WIFI_SSID      "CLEANING-SYSTEM"  
-#define BACKUP_EXAMPLE_ESP_WIFI_PASS      "12345678"    
+#define BACKUP_EXAMPLE_ESP_WIFI_SSID      "SHKJ2020" //"CLEANING-SYSTEM"  
+#define BACKUP_EXAMPLE_ESP_WIFI_PASS      "shkj1234." //"12345678"    
 
 typedef struct
 {
@@ -98,7 +98,7 @@ void parameter_write_liquid_alarm(uint8_t value);
 
 typedef struct
 {
-    uint32_t uuid;
+    char uuid[6];
     uint8_t nozzle;      //command down
     uint8_t centralizer;
     uint8_t rotation;
@@ -118,7 +118,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t uuid;
+    char uuid[6];
     uint8_t mode;      //command down
     uint8_t heater;    
     uint8_t status;     //status upload
@@ -138,7 +138,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t uuid;
+    char uuid[6];
     uint8_t status;     //status upload
     double timestamp;
     char msg_id[30];
@@ -192,6 +192,8 @@ uint32_t parameter_read_debug(void);
 
 void parameter_write_air_pump(uint8_t value);
 uint8_t parameter_read_air_pump(void);
+
+
 
 #ifdef __cplusplus
 }

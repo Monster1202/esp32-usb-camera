@@ -77,6 +77,7 @@ $<TARGET_FILE:__idf_lcd>
 $<TARGET_FILE:__idf_bsp>
 $<TARGET_FILE:__idf_cJSON>
 $<TARGET_FILE:__idf_codec>
+$<TARGET_FILE:__idf_http_client>
 $<TARGET_FILE:__idf_decoder_ijg>
 $<TARGET_FILE:__idf_esp-sr>
 $<TARGET_FILE:__idf_file_system>
@@ -84,7 +85,6 @@ $<TARGET_FILE:__idf_para_list>
 $<TARGET_FILE:__idf_wifi>
 $<TARGET_FILE:__idf_mqtt_app>
 $<TARGET_FILE:__idf_gpio_ctrl>
-$<TARGET_FILE:__idf_http_client>
 $<TARGET_FILE:__idf_key>
 $<TARGET_FILE:__idf_libhelix-mp3>
 $<TARGET_FILE:__idf_lvgl>

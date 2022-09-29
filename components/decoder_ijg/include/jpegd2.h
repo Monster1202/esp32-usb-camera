@@ -8,13 +8,14 @@
 #include "cdjpeg.h" 
 // #include <sys.h> 
 #include <setjmp.h>
+#include "http_client.h"
 
 #ifdef __cplusplus 
 extern "C" {
 #endif
 
 typedef bool (*lcd_write_cb)(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
-void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb);
+uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb);
 
 #ifdef __cplusplus 
 }

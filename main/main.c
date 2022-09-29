@@ -40,20 +40,60 @@
 // #include "lv_demos.h"
 // #include "lv_examples.h"
 
-static const char *TAG = "main";
-void Task1( void *pvParameters );
+// void lvgl_init(void);
+// #define LVGL_TICK_PERIOD_MS    1
+// #define LVGL_part_size (CONFIG_LCD_BUF_WIDTH * CONFIG_LCD_BUF_HIGHT * 2)
+// void lv_example_sjpg_2(void);
+// uint8_t test(uint8_t *buffer);
+// //const uint8_t lvgl_buffer[LVGL_part_size] = {0};
 
-void Task1(void *pvParameters) {
+
+// lv_img_dsc_t gImage_img = {
+//   .header.always_zero = 0,
+//   .header.w = CONFIG_LCD_BUF_WIDTH,//120,
+//   .header.h = CONFIG_LCD_BUF_HIGHT,//39,
+//   .data_size = LVGL_part_size,//LV_IMG_PX_SIZE_ALPHA_BYTE,
+//   .header.cf = LV_IMG_CF_TRUE_COLOR,//LV_IMG_CF_TRUE_COLOR_ALPHA,// LV_IMG_CF_RAW, //
+//   //.data = lvgl_buffer,//gImage_img_map,
+// };
+// //uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(LVGL_part_size,  MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+// static void example_increase_lvgl_tick(void *arg)
+// {
+//     /* Tell LVGL how many milliseconds has elapsed */
+//     lv_tick_inc(LVGL_TICK_PERIOD_MS);
+// }
+typedef struct{
+  int sender;
+  char *msg;
+}Data;
+xQueueHandle xqueue0;  //创建的测试队列句柄，我们定义数据为int型
+xQueueHandle xqueue1;  //创建的测试队列句柄，我们定义数据为字符串型
+xQueueHandle xqueue2;  //创建的测试队列句柄，我们定义数据为结构体型，结构体里面包括一个int型以及一个字符串型
+TaskHandle_t xTask0;   //任务0的句柄
+TaskHandle_t xTask1;   //任务1的句柄
+void Task1(void *pvParameters);
+void Task2(void *pvParameters);
+static const char *TAG = "main";
+// void Task1(void *pvParameters );
+
+// void Task1(void *pvParameters) {
+//   while(1)
+//   {
+//     vTaskDelay(1000 / portTICK_PERIOD_MS);
+//     ESP_LOGI(TAG,"PRO_CPU is runing");
+//     ESP_LOGI(TAG,"xPortGetCoreID:%d",xPortGetCoreID());
+//   }
+// }
+
+void test_task(void *pvParameters){
   while(1)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    ESP_LOGD(TAG,"PRO_CPU正在运行：");
-    ESP_LOGD(TAG,"xPortGetCoreID:%d",xPortGetCoreID());
+    ESP_LOGI(TAG,"test_task");
   }
 }
 
-
-#define BOOT_ANIMATION_MAX_SIZE (65 * 1024)  //80 will cause mqtt init error 
+#define BOOT_ANIMATION_MAX_SIZE (130 * 1024)  //80 will cause mqtt init error
 //esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x_start, int y_start, int x_end, int y_end, const void *color_data)
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data)
 {
@@ -64,76 +104,765 @@ _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *
     return true;
 }
 
+void setup(void) 
+{
+//   ESP_LOGI("Total heap: %d", ESP.getHeapSize());
+    printf("esp_get_free_heap_size = %d\n", esp_get_free_heap_size());
+    printf("esp_get_free_internal_heap_size = %d\n", esp_get_free_internal_heap_size());
+    printf("esp_get_minimum_free_heap_size = %d\n", esp_get_minimum_free_heap_size());
+//   ESP_LOGI("Total PSRAM: %d", ESP.getPsramSize());
+//   logESP_LOGI_d("Free PSRAM: %d", ESP.getFreePsram());
+    // static char InfoBuffer[512] = {0};
+    // vTaskList((char *) &InfoBuffer);
+		// printf("task_name  status priority left_heap task_number\r\n");
+		// printf("\r\n%s\r\n", InfoBuffer);
+}
+
 void app_main(void)
 {
+    setup();
     /* Initialize I2C 400KHz */
     ESP_ERROR_CHECK(bsp_i2c_init(I2C_NUM_0, 400000));
- 
+
     /* Initialize LCD */
     ESP_ERROR_CHECK(bsp_lcd_init());
     lcd_clear_fast(lcd_panel, COLOR_BLACK);
     lcd_draw_picture_test(lcd_panel);
-    /* malloc a buffer for RGB565 data, as 320*240*2 = 153600B,
-    here malloc a smaller buffer refresh lcd with steps */
-    // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    // assert(lcd_buffer != NULL);
-    //xTaskCreatePinnedToCore(Task1, "Task1", 10000, NULL, 1, NULL,  0);
-    /* Boot animation useful for LCD checking and camera power-on waiting, But consumes much flash */
-#if 1
-    esp_vfs_spiffs_conf_t spiffs_config = {
-        .base_path              = "/spiffs",
-        .partition_label        = NULL,
-        .max_files              = 5,
-        .format_if_mount_failed = false
-    };
+    //xTaskCreatePinnedToCore(Task1, "Task1", 4096, NULL, 1, NULL,  0);
 
-    ESP_ERROR_CHECK(esp_vfs_spiffs_register(&spiffs_config));
-
-    uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    assert(jpeg_buf != NULL);
-
-    // for (size_t i = 10; i <= 80; i += 2)    //start movie
-    // {
-    //     char file_name[64] = {0};
-    //     sprintf(file_name, "/spiffs/r%03d.jpg", i);
-    //     FILE *fd = fopen(file_name, "r");
-    //     int read_bytes = fread(jpeg_buf, 1, BOOT_ANIMATION_MAX_SIZE, fd);
-    //     fclose(fd);
-    //     mjpegdraw(jpeg_buf, read_bytes, lcd_buffer, lcd_write_bitmap);
-    //     ESP_LOGD(TAG, "file_name: %s, fd: %p, read_bytes: %d, free_heap: %d", file_name, fd, read_bytes, esp_get_free_heap_size());
-    //     // if(i == 10 )//|| i == 80)
-    //     //     ESP_LOG_BUFFER_HEX(TAG, jpeg_buf, read_bytes);
-    // }
-    //free(jpeg_buf);
-    //free(lcd_buffer);
-#endif
- //ESP_LOGI(TAG, "&lcd_buffer:%d",*lcd_buffer);
     para_init();
     gpio_init();
     wifi_connect();
-    
-    xTaskCreate(&http_test_task, "http_test_task", BOOT_ANIMATION_MAX_SIZE, (void *)(jpeg_buf), 6, NULL);
-    
+    uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    assert(jpeg_buf != NULL);
+    //xTaskCreate(&http_test_task, "http_test_task", BOOT_ANIMATION_MAX_SIZE, (void *)(jpeg_buf), 6, NULL);
+    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 20000, NULL, 16, NULL,  1);  //(void *)(lcd_buffer)
+    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10000, (void *)(jpeg_buf), 15, NULL,  0);
+    // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(LVGL_part_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    // assert(lcd_buffer != NULL);
+    //xTaskCreate(&http_test_task, "http_test_task", BOOT_ANIMATION_MAX_SIZE, (void *)(lcd_buffer), 6, NULL);
     mqtt_init();
-    //lvgl_init();
+    //uint8_t *lcd_buffer = heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    //assert(lcd_buffer != NULL);
+    
+    // lvgl_init();
+    // lv_obj_t * img2;
+    // img2 = lv_img_create(lv_scr_act());
+    //ESP_LOGI(TAG, "lv_example_sjpg_2");
+    //xTaskCreate(&test_task, "test_task", 4096, NULL, 7, NULL);
     //uint8_t s_led_state = 0;
+    // xqueue0 = xQueueCreate( 10, sizeof( int ) );
+     
+    // xqueue2 = xQueueCreate( 10, sizeof(Data));
+    // xTaskCreatePinnedToCore(Task1, "Task1", 10000, NULL, 11, &xTask0,  0);  //最后一个参数至关重要，决定这个任务创建在哪个核上.PRO_CPU 为 0, APP_CPU 为 1,或者 tskNO_AFFINITY 允许任务在两者上运行.
+    // xTaskCreatePinnedToCore(Task2, "Task2", 10000, NULL, 12, &xTask1,  1);
+
+    int cnt = 0;
     while (1) {
-        //vTaskDelay(pdMS_TO_TICKS(10));
+        // vTaskDelay(pdMS_TO_TICKS(10));
         // lv_timer_handler();
+        // //test(lcd_buffer);
+        // cnt++;
+        // if(cnt % 100 == 1){
+        //   gImage_img.data = jpeg_buf;
+        //   lv_img_set_src(img2, &gImage_img);
+        //   lv_obj_align(img2, LV_ALIGN_DEFAULT, 240, 240);
+        //   ESP_LOGI(TAG, "lv_example_sjpg_2");
+        // }
+        setup();
+        vTaskDelay(20000 / portTICK_RATE_MS);
+        //  lv_example_sjpg_2();
         /* task monitor code if necessary */
-        // s_led_state = !s_led_state;
-        // gpio_set_level(GPIO_OUTPUT_IO_1, s_led_state);
-        // gpio_set_level(GPIO_OUTPUT_IO_2, s_led_state);
-        // gpio_set_level(GPIO_OUTPUT_IO_3, s_led_state);
-        // lcd_clear_fast(lcd_panel, COLOR_BLACK);
-         vTaskDelay(2000 / portTICK_PERIOD_MS);
-        // lcd_clear(lcd_panel, COLOR_BLUE);
-        // vTaskDelay(2000 / portTICK_PERIOD_MS);
-        // lcd_draw_picture_test(lcd_panel);
-        // vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 }
 
+// void Task1(void *pvParameters) {
+//   //在这里可以添加一些代码，这样的话这个任务执行时会先执行一次这里的内容（当然后面进入while循环之后不会再执行这部分了）
+//   Data data_send;  //创建一个数据结构体用于发送数据
+//   data_send.sender = 1314;  //这个数据结构体的整数直接赋值为1314
+//   BaseType_t xStatus;  //用于状态返回在下面会用到
+//   BaseType_t xStatus1;
+//   BaseType_t xStatus2;
+//   xqueue1 = xQueueCreate( 10, sizeof( char[10] ) );
+//   int send_int = 615;
+//   char send_str[10] = "cx??";
+//   const TickType_t xTicksToWait = pdMS_TO_TICKS(100);   // 阻止任务的时间，直到队列有空闲空间 ，应该是如果发送需要阻滞等待（比如队列满了）或者别的情况需要用到的
+//   while(1)
+//   {
+//     vTaskDelay(2000 / portTICK_RATE_MS);
+//     printf("xPortGetCoreID():%d ",xPortGetCoreID());
+//     printf("xTaskGetAffinity(xTask0):%d ",xTaskGetAffinity(xTask0));    //获取任务被固定到哪里，xTask1 就是 Task0任务本身的句柄
+//     data_send.msg = (char *)malloc(20);  //分配所需的内存空间，并返回一个指向它的指针，里面传入的参数是SIZE。
+//     memset(data_send.msg, 0, 20);  //清空这个data_send，也就是上面分配的这个空间
+//     // 从存储区 str2 复制 n 个字节到存储区 str1。 str2就是"hello world" ，str1就是data_send.msg ， strlen("hello world")就是n
+//     memcpy(data_send.msg, "hello world", strlen("hello world"));  
+//     xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );  //发送data_send这个数据结构体到 xqueue2 队列
+    
+//     xStatus1 = xQueueSendToFront( xqueue0, &send_int, xTicksToWait );  //发送send_int这个数据结构体到 xqueue0 队列
+//     xStatus2 = xQueueSendToFront( xqueue1, &send_str, xTicksToWait );  //发送send_str这个数据结构体到 xqueue1 队列
+//     if( xStatus == pdPASS && xStatus1 == pdPASS && xStatus2 == pdPASS) {
+//       printf("send data OK");  // 发送正常 
+//     }
+//     printf("*********************************************\r\n");
+//   }
+// }
+ 
+// void Task2(void *pvParameters) {
+//   //  这些变量作用与上面相同，只是这里的data_get就是我们从队列里面获取的东西了
+//   BaseType_t xStatus;
+//   BaseType_t xStatus1;
+//   BaseType_t xStatus2;
+//   const TickType_t xTicksToWait = pdMS_TO_TICKS(50);  //这里就是用于取数据阻塞了，我觉得本来这种收发就不可能同步，但是应该接收来满足发送，接收速度大于发送速度才行
+//   Data data_get;
+//   int get_int;
+//   char get_str[10];
+//   while(1)
+//   {
+//     vTaskDelay(2000 / portTICK_RATE_MS);
+//     xStatus = xQueueReceive( xqueue2, &data_get, xTicksToWait );  //从队列2中取一条数据
+//     xStatus = xQueueReceive( xqueue0, &get_int, xTicksToWait );
+//     xStatus = xQueueReceive( xqueue1, &get_str, xTicksToWait );
+//     if(xStatus == pdPASS){
+//       //free(data_get.msg);  //释放数据结构体的字符串部分的空间
+//       printf("data_get.sender:%d ",data_get.sender);
+//       printf("data_get.msg:%s ",data_get.msg);
+//       printf("get_int:%d ",get_int);
+//       printf("get_str:%s ",get_str);
+//     }
+//     printf("*********************************************\r\n");
+//   }
+// }
+
+// uint8_t test(uint8_t *buffer)
+// {
+//     memcpy(lvgl_buffer , buffer , LVGL_part_size );
+//     return 0;
+// }
+
+// void lvgl_init(void)
+// {
+//     // ESP_ERROR_CHECK(tca9554_init());
+//     // ext_io_t io_conf = BSP_EXT_IO_DEFAULT_CONFIG();
+//     // ext_io_t io_level = BSP_EXT_IO_DEFAULT_LEVEL();
+//     // ESP_ERROR_CHECK(tca9554_set_configuration(io_conf.val));
+//     // ESP_ERROR_CHECK(tca9554_write_output_pins(io_level.val));
+
+//     const esp_timer_create_args_t lvgl_tick_timer_args = {
+//         .callback = &example_increase_lvgl_tick,
+//         .name = "lvgl_tick"
+//     };
+//     esp_timer_handle_t lvgl_tick_timer = NULL;
+//     ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
+//     ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_TICK_PERIOD_MS * 1000));  //
+
+//     /* LVGL init */
+//     lv_init();                  //内核初始化
+//     lv_port_disp_init();	    //接口初始化
+//     lv_port_indev_init();       //输入设备初始化
+//     // lv_port_fs_init();       //文件系统初始化
+//     //lv_example_get_started_1();
+//     //lv_example_sjpg_2();
+// }
+
+
+// void lv_example_sjpg_2(void)
+// {
+//   lv_obj_t * img2;
+
+//   img2 = lv_img_create(lv_scr_act());
+//   //test(jpg);
+//   lv_img_set_src(img2, &gImage_img);
+//   lv_obj_align(img2, LV_ALIGN_DEFAULT, 240, 240);
+// }
+
+// const uint8_t gImage_img_map[] = {
+// // static const unsigned char wallpaper_jpg[9360] =  { /* 0X00,0X10,0X78,0X00,0X27,0X00,0X01,0X1B, */
+//     0X9D, 0XFF, 0X7D, 0XFF, 0X1D, 0XFF, 0XFD, 0XFE, 0X1E, 0XFF, 0X1E, 0XFF, 0X1D, 0XFF, 0X1C, 0XFF,
+//     0X1C, 0XFF, 0X1D, 0XFF, 0XFC, 0XFE, 0X1D, 0XFF, 0X1D, 0XFF, 0XFC, 0XFE, 0X1D, 0XFF, 0X1D, 0XFF,
+//     0X1C, 0XFF, 0X3C, 0XFF, 0X1D, 0XFF, 0X3D, 0XFF, 0X1D, 0XFF, 0X3D, 0XFF, 0X1D, 0XFF, 0X1D, 0XFF,
+//     0X1D, 0XFF, 0XFD, 0XFE, 0XFD, 0XFE, 0X1D, 0XFF, 0X1D, 0XFF, 0X3D, 0XFF, 0X3D, 0XFF, 0X1C, 0XFF,
+//     0X1C, 0XFF, 0X1C, 0XFF, 0X3D, 0XFF, 0X1D, 0XFF, 0X1D, 0XFF, 0X3E, 0XFF, 0X9F, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X9D, 0XFF, 0X08, 0X8A, 0X46, 0X91, 0X46, 0XA1, 0X27, 0X99, 0X46, 0X99, 0X46, 0X99, 0X66, 0X99,
+//     0X25, 0X99, 0X46, 0X99, 0X66, 0X99, 0X46, 0X99, 0X25, 0X99, 0X46, 0XA1, 0X66, 0XA1, 0X46, 0X99,
+//     0X25, 0X99, 0X46, 0X99, 0X66, 0X99, 0X46, 0X99, 0X46, 0X99, 0X66, 0X99, 0X46, 0X99, 0X46, 0X99,
+//     0X26, 0X99, 0X26, 0XA1, 0X26, 0XA1, 0X26, 0X99, 0X67, 0XA1, 0X66, 0X99, 0X46, 0X99, 0X66, 0XA1,
+//     0X45, 0X99, 0X46, 0XA1, 0X46, 0X99, 0X26, 0X99, 0X67, 0XA1, 0X05, 0X81, 0X97, 0XE5, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X5D, 0XFF, 0X86, 0X89, 0XC4, 0XA8, 0X83, 0XB8, 0XC5, 0XB8, 0XA4, 0XB0, 0XA3, 0XB0, 0XC3, 0XB0,
+//     0XA5, 0XB8, 0X84, 0XB0, 0XA3, 0XB8, 0XC3, 0XB8, 0X83, 0XB8, 0X84, 0XB8, 0X84, 0XB8, 0X84, 0XB8,
+//     0XA4, 0XB8, 0XA4, 0XB8, 0X63, 0XB0, 0X84, 0XB8, 0XA4, 0XB8, 0X83, 0XB0, 0XA3, 0XB8, 0XA3, 0XB8,
+//     0XA3, 0XB0, 0XA4, 0XB0, 0X84, 0XB8, 0XA4, 0XB8, 0XA3, 0XB0, 0X82, 0XB0, 0XA3, 0XB8, 0X83, 0XB8,
+//     0XA4, 0XB8, 0XA3, 0XB8, 0X83, 0XB0, 0XA4, 0XB8, 0XA5, 0XB8, 0X63, 0X90, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0XC7, 0XA1, 0X83, 0XB0, 0X63, 0XC8, 0X84, 0XC8, 0X84, 0XC8, 0XC4, 0XC8, 0X83, 0XC0,
+//     0X84, 0XD0, 0X64, 0XC8, 0X83, 0XC8, 0X62, 0XC0, 0X84, 0XD0, 0X64, 0XC8, 0X84, 0XD0, 0X63, 0XC8,
+//     0X84, 0XC8, 0X63, 0XC8, 0X84, 0XC8, 0X64, 0XC0, 0X83, 0XB8, 0XC4, 0XB8, 0X82, 0XB8, 0XA3, 0XC0,
+//     0XC3, 0XC0, 0X83, 0XC0, 0X84, 0XC8, 0X84, 0XC8, 0X83, 0XC8, 0XA3, 0XC8, 0X83, 0XC8, 0X83, 0XC8,
+//     0X63, 0XC8, 0X83, 0XD0, 0XA3, 0XC8, 0XA3, 0XC8, 0X42, 0XC0, 0X83, 0XA8, 0X36, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X46, 0X99, 0XC4, 0XB0, 0XA4, 0XD0, 0X63, 0XC8, 0X63, 0XC8, 0X83, 0XC0, 0XA4, 0XC8,
+//     0X63, 0XC8, 0X84, 0XD0, 0X83, 0XC8, 0XA4, 0XD0, 0X64, 0XC8, 0X64, 0XC8, 0X84, 0XC8, 0X83, 0XC8,
+//     0X63, 0XC8, 0XA4, 0XC8, 0X84, 0XB8, 0X27, 0XB9, 0X87, 0XA9, 0X87, 0XA1, 0X25, 0XA1, 0XA3, 0X98,
+//     0X62, 0XA0, 0XA4, 0XB8, 0X63, 0XC0, 0X63, 0XC8, 0X63, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X83, 0XC8,
+//     0X83, 0XC8, 0X83, 0XC0, 0X62, 0XC0, 0XA3, 0XC8, 0X83, 0XC8, 0X63, 0XA0, 0X76, 0XF5, 0X9E, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0XA1, 0XA4, 0XB0, 0X42, 0XC0, 0X83, 0XD0, 0X83, 0XD0, 0X62, 0XC0, 0X83, 0XC8,
+//     0X83, 0XC8, 0XA4, 0XC8, 0X83, 0XC8, 0X83, 0XC0, 0XA5, 0XB8, 0X84, 0XB0, 0X63, 0XA8, 0X83, 0XA8,
+//     0XC4, 0XB8, 0X84, 0XB0, 0XA5, 0XA8, 0XBC, 0XFE, 0XFC, 0XFE, 0XFC, 0XFE, 0XFC, 0XFE, 0XF8, 0XFD,
+//     0X52, 0XF4, 0X09, 0XBA, 0X83, 0XA0, 0X83, 0XB0, 0X63, 0XC0, 0X63, 0XC8, 0XA4, 0XD0, 0X63, 0XC8,
+//     0X83, 0XC8, 0XA3, 0XC8, 0X82, 0XC0, 0XA3, 0XC8, 0X63, 0XC8, 0X42, 0XA0, 0X76, 0XF5, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0XA1, 0X83, 0XB8, 0X63, 0XC8, 0X83, 0XD0, 0X42, 0XC8, 0X84, 0XD0, 0X63, 0XC8,
+//     0X42, 0XB0, 0X83, 0XB8, 0XA4, 0XC0, 0XA4, 0XB0, 0X84, 0X90, 0X6F, 0XDB, 0X10, 0XE4, 0XCB, 0XBA,
+//     0X86, 0XA1, 0XA3, 0X98, 0X63, 0XA0, 0XA8, 0XC1, 0X52, 0XFC, 0X1D, 0XFF, 0X7E, 0XFF, 0X9E, 0XFF,
+//     0XBE, 0XFF, 0X7E, 0XFF, 0X18, 0XFE, 0X6B, 0XB2, 0XA4, 0XA0, 0X64, 0XB8, 0X64, 0XC0, 0X64, 0XC8,
+//     0X84, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X42, 0XC8, 0XA4, 0XB0, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X87, 0XA1, 0XA3, 0XB8, 0X63, 0XD0, 0X63, 0XC8, 0X83, 0XC8, 0X84, 0XB8, 0XA4, 0XB0,
+//     0X15, 0XFD, 0X46, 0XC1, 0X83, 0XA8, 0X66, 0XB1, 0X39, 0XFE, 0X5E, 0XFF, 0X9D, 0XFF, 0X7D, 0XFF,
+//     0X5D, 0XFF, 0X39, 0XFE, 0X10, 0XEC, 0X46, 0X99, 0XC4, 0X88, 0X66, 0X81, 0X93, 0XD4, 0X9E, 0XFF,
+//     0XBE, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0X7E, 0XFF, 0XD4, 0XFC, 0XA4, 0X98, 0XA4, 0XB8, 0X84, 0XC8,
+//     0X84, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X63, 0XD0, 0X43, 0XA0, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1E, 0XFF, 0X47, 0XA1, 0X84, 0XB8, 0X84, 0XD0, 0X43, 0XC8, 0XA4, 0XB8, 0XA4, 0X90, 0XB8, 0XFD,
+//     0XDC, 0XFE, 0X87, 0XB1, 0X05, 0X99, 0X1C, 0XFF, 0X7D, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XBF, 0XFF, 0XBE, 0XFF, 0X9E, 0XFF, 0XD7, 0XF5, 0X09, 0X92, 0XC4, 0X80, 0X87, 0X99,
+//     0XF7, 0XFD, 0X7D, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0X9B, 0XFE, 0XC4, 0X98, 0X83, 0XB8,
+//     0X83, 0XC0, 0X63, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X63, 0XC8, 0X42, 0XA0, 0X76, 0XF5, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1E, 0XFF, 0X67, 0XA1, 0X84, 0XB8, 0X83, 0XC8, 0XA4, 0XC8, 0X42, 0XA0, 0X52, 0XEC, 0X1C, 0XFF,
+//     0X09, 0XBA, 0XA3, 0X98, 0X66, 0XA1, 0X1C, 0XFF, 0X9D, 0XFF, 0XDE, 0XFF, 0X9F, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XDE, 0XFF, 0X9E, 0XFF, 0X7E, 0XFF, 0X15, 0XFD, 0X25, 0X91,
+//     0X03, 0X81, 0XCE, 0XCB, 0X9D, 0XFF, 0XBE, 0XFF, 0XDF, 0XFF, 0X9F, 0XFF, 0XBB, 0XFE, 0XE4, 0X98,
+//     0XA4, 0XB8, 0XA4, 0XC8, 0X63, 0XC8, 0X62, 0XC8, 0XA3, 0XD0, 0X62, 0XA0, 0X55, 0XED, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X87, 0XA1, 0XA4, 0XB0, 0XA4, 0XC8, 0XA4, 0XB8, 0X45, 0XB1, 0X3C, 0XFF, 0X51, 0XE4,
+//     0X62, 0XA0, 0X83, 0XB8, 0XE5, 0XB0, 0X9B, 0XFE, 0XDB, 0XFE, 0X5D, 0XFF, 0X5E, 0XFF, 0X7F, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBF, 0XFF, 0X9E, 0XFF, 0X5D, 0XFF,
+//     0XAA, 0XAA, 0XE3, 0X80, 0XAA, 0XBA, 0X5D, 0XFF, 0XDE, 0XFF, 0XDF, 0XFF, 0XBE, 0XFF, 0XF8, 0XFD,
+//     0X63, 0X98, 0XA4, 0XC0, 0X83, 0XC8, 0X43, 0XC8, 0X63, 0XD0, 0X83, 0XA8, 0X55, 0XF5, 0XDE, 0XFF,
+//     0XFE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3C, 0XFF, 0X86, 0XA1, 0XA4, 0XB8, 0X83, 0XB8, 0X82, 0X98, 0X96, 0XFD, 0XDB, 0XFE, 0XC3, 0X88,
+//     0XC4, 0XB0, 0XA4, 0XB8, 0X84, 0X98, 0XA4, 0X88, 0XE3, 0X78, 0X04, 0X71, 0XE8, 0X89, 0X2E, 0XAB,
+//     0X55, 0XE5, 0X9E, 0XFF, 0X9E, 0XFF, 0XBF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF,
+//     0X5D, 0XFF, 0XEF, 0XDB, 0XC3, 0X88, 0X49, 0XAA, 0X5D, 0XFF, 0X9E, 0XFF, 0XDF, 0XFF, 0X9E, 0XFF,
+//     0X8F, 0XE3, 0X63, 0XA8, 0X84, 0XC8, 0X63, 0XD0, 0X83, 0XD0, 0X62, 0XA0, 0X75, 0XF5, 0XDE, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3C, 0XFF, 0X66, 0X99, 0XA4, 0XC0, 0XA4, 0XB8, 0XC8, 0XA1, 0X1D, 0XFF, 0X8B, 0XDA, 0XA4, 0XA8,
+//     0X83, 0X98, 0XA8, 0XA9, 0XD0, 0XDB, 0XB3, 0XE4, 0X72, 0XD4, 0XCF, 0XBB, 0X6B, 0X9A, 0X26, 0X81,
+//     0XC4, 0X88, 0XE4, 0X90, 0X4D, 0XDB, 0XBB, 0XFE, 0X9E, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XBF, 0XFF, 0X7E, 0XFF, 0X93, 0XEC, 0XC4, 0X80, 0X4A, 0XAA, 0X5D, 0XFF, 0XBE, 0XFF, 0XBE, 0XFF,
+//     0X1D, 0XFF, 0X26, 0XA1, 0X84, 0XB8, 0X64, 0XC8, 0X84, 0XD0, 0X62, 0XA0, 0X76, 0XF5, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XDE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X66, 0XA1, 0XA4, 0XC0, 0X22, 0XA8, 0X73, 0XEC, 0X3D, 0XFF, 0XA4, 0X98, 0X83, 0XA0,
+//     0XD4, 0XFC, 0X3D, 0XFF, 0X7E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X5E, 0XFF, 0X1D, 0XFF,
+//     0X56, 0XFD, 0X6A, 0XC2, 0XA3, 0X88, 0X04, 0X81, 0X31, 0XCC, 0X9E, 0XFF, 0XBF, 0XFF, 0XDF, 0XFF,
+//     0XDF, 0XFF, 0XBF, 0XFF, 0X7F, 0XFF, 0X52, 0XDC, 0XC4, 0X88, 0X0C, 0XC3, 0X7E, 0XFF, 0XBE, 0XFF,
+//     0X9E, 0XFF, 0XD0, 0XDB, 0X63, 0XA8, 0X64, 0XC8, 0X63, 0XC8, 0X63, 0XA0, 0X76, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF,
+//     0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0XA7, 0XA1, 0X83, 0XB0, 0X63, 0XA8, 0X7B, 0XFE, 0X35, 0XED, 0XC3, 0X80, 0X55, 0XFD,
+//     0X7D, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XBE, 0XFF, 0XDE, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF,
+//     0X9F, 0XFF, 0X9E, 0XFF, 0X9A, 0XFE, 0X8A, 0X9A, 0XC4, 0X88, 0X09, 0XAA, 0XDB, 0XFE, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF, 0X9D, 0XFF, 0X6E, 0XCB, 0XA3, 0X78, 0X35, 0XED, 0X9E, 0XFF,
+//     0XBE, 0XFF, 0XBA, 0XFE, 0X83, 0XA0, 0X84, 0XC8, 0X63, 0XD0, 0X63, 0XA8, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBB, 0XCE, 0XD4, 0X94,
+//     0XD4, 0X94, 0XFC, 0XD6, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X39, 0XC6, 0XF4, 0X94,
+//     0XD3, 0X94, 0XB7, 0XB5, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XD7, 0XB5, 0X52, 0X84,
+//     0X72, 0X8C, 0X93, 0X8C, 0X72, 0X8C, 0XB7, 0XAD, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBB, 0XCE,
+//     0X93, 0X8C, 0X72, 0X8C, 0X72, 0X8C, 0X93, 0X8C, 0XD8, 0XB5, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0X3D, 0XE7, 0X14, 0X9D, 0X92, 0X8C, 0X59, 0XC6, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBB, 0XD6, 0XD3, 0X94, 0X93, 0X8C, 0X15, 0X9D, 0X9E, 0XEF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9A, 0XCE, 0XD3, 0X94, 0XD3, 0X94, 0X55, 0XA5,
+//     0X7E, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDC, 0XDE, 0XDB, 0XD6, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X18, 0XBE, 0X31, 0X84, 0X92, 0X8C, 0X7A, 0XCE, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X86, 0X99, 0X83, 0XB0, 0X46, 0XC1, 0X1D, 0XFF, 0X0D, 0XAB, 0XCB, 0XAA, 0X7D, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XBE, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0X9E, 0XFF, 0XF4, 0XFC, 0XC3, 0X80, 0X65, 0X89, 0X79, 0XFE,
+//     0XBF, 0XFF, 0XBF, 0XFF, 0XFF, 0XFF, 0XDE, 0XFF, 0X5D, 0XFF, 0X09, 0X9A, 0XE4, 0X78, 0XDB, 0XFE,
+//     0XBE, 0XFF, 0X7D, 0XFF, 0XA7, 0XB9, 0X83, 0XC0, 0X63, 0XC8, 0X63, 0XA8, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF0, 0X73, 0X87, 0X21, 0XEC, 0X52,
+//     0XCC, 0X52, 0X66, 0X29, 0X5D, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0X6E, 0X6B, 0X86, 0X29, 0XEC, 0X5A,
+//     0X0C, 0X5B, 0X08, 0X3A, 0XA7, 0X29, 0X9F, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0X29, 0X3A, 0XAB, 0X52,
+//     0X8F, 0X6B, 0X6E, 0X63, 0X6E, 0X63, 0XC8, 0X31, 0X4E, 0X63, 0XFF, 0XFF, 0XFF, 0XF7, 0XAF, 0X6B,
+//     0XA8, 0X31, 0XB0, 0X73, 0X6E, 0X63, 0X4E, 0X63, 0XC8, 0X31, 0XAF, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X55, 0XA5, 0X45, 0X21, 0XAB, 0X52, 0XEC, 0X5A, 0X66, 0X29, 0XF8, 0XBD,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X51, 0X84, 0X66, 0X29, 0XCB, 0X52, 0X0D, 0X5B, 0X8A, 0X4A, 0X45, 0X21,
+//     0X59, 0XC6, 0XFF, 0XFF, 0XFF, 0XFF, 0XF0, 0X7B, 0X45, 0X21, 0XCB, 0X52, 0X2D, 0X5B, 0X4A, 0X42,
+//     0X45, 0X21, 0X7A, 0XCE, 0XFF, 0XFF, 0XFF, 0XFF, 0X31, 0X84, 0X6E, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X2D, 0X63, 0XA7, 0X29, 0XCF, 0X73, 0X2D, 0X5B, 0X66, 0X29, 0XF0, 0X7B, 0XFF, 0XFF,
+//     0X5C, 0XFF, 0X66, 0X91, 0XA4, 0XA8, 0XC9, 0XD1, 0XDD, 0XFE, 0X88, 0X81, 0X76, 0XE5, 0XBE, 0XFF,
+//     0XDF, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0X7E, 0XFF, 0X5D, 0XFF, 0X5D, 0XFF, 0X9E, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XBE, 0XFF, 0X38, 0XFE, 0XC3, 0X88, 0X04, 0X91,
+//     0XDC, 0XFE, 0X9F, 0XFF, 0XFE, 0XFF, 0XFE, 0XFF, 0XDF, 0XFF, 0XBB, 0XFE, 0XA3, 0X88, 0XAA, 0XC2,
+//     0X9D, 0XFF, 0X9D, 0XFF, 0XAB, 0XD2, 0X43, 0XB0, 0X64, 0XC8, 0X84, 0XA8, 0X36, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X93, 0X84, 0XC8, 0X31, 0X1C, 0XDF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X5D, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0XF4, 0X9C, 0X08, 0X3A, 0X9E, 0XEF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X39, 0XBE, 0XBF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0X49, 0X42, 0X7A, 0XC6,
+//     0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XBF, 0XEF, 0X25, 0X19, 0XBB, 0XCE, 0XFF, 0XFF, 0X6F, 0X63,
+//     0X31, 0X7C, 0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XFF, 0X5E, 0XE7, 0X26, 0X21, 0XBC, 0XD6, 0XFF, 0XFF,
+//     0XFF, 0XF7, 0X7A, 0XC6, 0XE4, 0X10, 0X18, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0X9E, 0XF7, 0XBE, 0XF7,
+//     0XFF, 0XFF, 0X79, 0XCE, 0X45, 0X29, 0XBB, 0XD6, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBB, 0XD6,
+//     0X5D, 0XEF, 0XFF, 0XFF, 0XF9, 0XBD, 0X66, 0X29, 0XFB, 0XDE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X9B, 0XCE, 0X3D, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0X31, 0X84, 0X8E, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X39, 0XBE, 0X87, 0X29, 0XBF, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0X1C, 0XDF, 0XD3, 0X94, 0XFF, 0XFF,
+//     0X5D, 0XFF, 0XA7, 0X99, 0X83, 0XA0, 0XCD, 0XF2, 0XBC, 0XFE, 0X05, 0X71, 0X7A, 0XFE, 0XBE, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XDB, 0XFE, 0X45, 0X61, 0X05, 0X71, 0XE8, 0X91, 0XAF, 0XBB, 0X79, 0XFE,
+//     0X5D, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF, 0X18, 0XFE, 0XC3, 0X88,
+//     0X87, 0X89, 0X7E, 0XFF, 0XDE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9E, 0XFF, 0X6E, 0XDB, 0XC3, 0X88,
+//     0X18, 0XFE, 0X5D, 0XFF, 0XD0, 0XF3, 0X83, 0XB0, 0X84, 0XC8, 0X63, 0XA8, 0X35, 0XED, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9F, 0XEF, 0XA8, 0X29, 0X7A, 0XC6, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X6E, 0X6B, 0XAF, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X29, 0X42, 0X7A, 0XC6,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X87, 0X29, 0X19, 0XBE, 0XFF, 0XFF, 0X8F, 0X6B,
+//     0X31, 0X7C, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X87, 0X29, 0X59, 0XC6, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X6A, 0X42, 0X15, 0X9D, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X55, 0XA5, 0X29, 0X42, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XF4, 0X9C, 0X4A, 0X42, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0X52, 0X84, 0X8F, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XB7, 0XAD, 0XAB, 0X4A, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0X91, 0X83, 0XA0, 0X0D, 0XF3, 0XDC, 0XFE, 0X04, 0X71, 0XBA, 0XFE, 0XDE, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XBD, 0XFF, 0X30, 0XB4, 0X0D, 0XAB, 0X87, 0X91, 0X04, 0X89, 0XC3, 0X88,
+//     0X6A, 0XBA, 0X9A, 0XFE, 0X9E, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0X9E, 0XFF, 0X76, 0XFD,
+//     0XA3, 0X88, 0X2D, 0XCB, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF, 0XDB, 0XFE, 0X04, 0X81,
+//     0XEC, 0XAA, 0X3D, 0XFF, 0X31, 0XFC, 0X62, 0XA0, 0XA3, 0XC0, 0X63, 0XA0, 0X76, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X97, 0XAD, 0XE9, 0X29, 0X7F, 0XDF, 0X7E, 0XE7, 0X7E, 0XE7,
+//     0X5E, 0XE7, 0X7E, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDC, 0XD6, 0X67, 0X21, 0X0D, 0X5B, 0XF9, 0XBD,
+//     0X3D, 0XE7, 0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XF7, 0XDF, 0XFF, 0XFF, 0XFF, 0X2A, 0X42, 0X36, 0X9D,
+//     0XDB, 0XD6, 0XBB, 0XD6, 0XBB, 0XCE, 0X6E, 0X63, 0XA7, 0X29, 0XFF, 0XF7, 0XFF, 0XF7, 0X8F, 0X6B,
+//     0X6E, 0X63, 0X1D, 0XDF, 0XBB, 0XD6, 0X9B, 0XCE, 0X4E, 0X63, 0X29, 0X42, 0XBF, 0XF7, 0XFF, 0XFF,
+//     0X9B, 0XCE, 0X25, 0X19, 0XFD, 0XD6, 0X9F, 0XE7, 0X5E, 0XE7, 0X7E, 0XE7, 0X3D, 0XDF, 0XFF, 0XF7,
+//     0XFF, 0XFF, 0XDF, 0XF7, 0XE8, 0X31, 0X49, 0X3A, 0X97, 0XAD, 0X3D, 0XDF, 0XDF, 0XEF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XF7, 0XBF, 0XEF, 0XE8, 0X31, 0X6A, 0X4A, 0X96, 0XAD, 0X1D, 0XDF, 0XBF, 0XF7,
+//     0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0X31, 0X7C, 0X8F, 0X6B, 0XDF, 0XF7, 0XFF, 0XFF,
+//     0X93, 0X8C, 0X8B, 0X42, 0XDC, 0XD6, 0X9B, 0XCE, 0XBB, 0XD6, 0X7A, 0XCE, 0X1C, 0XE7, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0X91, 0X82, 0XA0, 0X2D, 0XFB, 0XFB, 0XFE, 0X24, 0X71, 0XB2, 0XD4, 0X9D, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFE, 0XFF, 0XBE, 0XFF, 0X5E, 0XFF, 0X3E, 0XFF, 0X7A, 0XFE, 0X6D, 0XD3,
+//     0XC3, 0X88, 0XE4, 0X80, 0X35, 0XED, 0X9F, 0XFF, 0XBF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X7E, 0XFF,
+//     0X4E, 0XD3, 0XC3, 0X88, 0X18, 0XFE, 0XDE, 0XFF, 0XFE, 0XFF, 0XDE, 0XFF, 0X7E, 0XFF, 0X6F, 0XBB,
+//     0XE5, 0X80, 0X9B, 0XFE, 0XF0, 0XFB, 0X82, 0XB0, 0XA3, 0XC0, 0X63, 0XA0, 0X56, 0XF5, 0X9F, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X14, 0X9D, 0X05, 0X19, 0XA8, 0X29, 0X87, 0X21, 0X86, 0X21, 0X66, 0X21,
+//     0X46, 0X21, 0X46, 0X21, 0X3C, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0X5E, 0XDF, 0XF0, 0X7B, 0XE8, 0X39,
+//     0X46, 0X29, 0X67, 0X29, 0XB0, 0X6B, 0XBF, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0X6B, 0X42, 0X87, 0X29,
+//     0XC8, 0X31, 0XA7, 0X31, 0XA6, 0X31, 0X2D, 0X63, 0X7E, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF0, 0X73,
+//     0X66, 0X21, 0XA7, 0X31, 0X87, 0X29, 0X46, 0X21, 0X05, 0X19, 0XDB, 0XD6, 0XFF, 0XFF, 0X7B, 0XCE,
+//     0X25, 0X19, 0XC8, 0X29, 0X66, 0X21, 0X87, 0X21, 0X46, 0X21, 0X66, 0X21, 0X46, 0X21, 0X97, 0XAD,
+//     0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XF7, 0XD4, 0X94, 0X4A, 0X42, 0X46, 0X21, 0X67, 0X21, 0XEC, 0X5A,
+//     0XFB, 0XD6, 0XFF, 0XFF, 0XFF, 0XF7, 0XBF, 0XF7, 0X92, 0X8C, 0X29, 0X42, 0X46, 0X21, 0X67, 0X29,
+//     0X0D, 0X5B, 0X3C, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0X31, 0X7C, 0XAF, 0X6B, 0XFF, 0XFF, 0X97, 0XAD,
+//     0X66, 0X21, 0X87, 0X29, 0XC8, 0X31, 0XA7, 0X31, 0XC7, 0X31, 0X66, 0X29, 0XAF, 0X73, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0X99, 0X83, 0XA8, 0X8B, 0XEA, 0XFB, 0XFE, 0X86, 0X89, 0X65, 0X91, 0X3D, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0XBF, 0XFF, 0X9E, 0XFF,
+//     0X9A, 0XFE, 0XE7, 0X91, 0XA3, 0X80, 0XD4, 0XFC, 0X9E, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0X1C, 0XFF, 0X46, 0X81, 0X49, 0X9A, 0X7D, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF, 0XBF, 0XFF, 0X5B, 0XFE,
+//     0X84, 0X88, 0X88, 0XD1, 0XE4, 0XC0, 0X83, 0XC0, 0X63, 0XC8, 0X63, 0XA8, 0X56, 0XFD, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X76, 0XAD, 0XE9, 0X39, 0X9F, 0XE7, 0X7E, 0XE7, 0X7E, 0XE7,
+//     0X9E, 0XEF, 0X7D, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XBE, 0XF7, 0X59, 0XC6, 0XAB, 0X4A, 0X2D, 0X5B, 0XFF, 0XFF, 0XFF, 0XFF, 0X49, 0X42, 0X39, 0XBE,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X8E, 0X6B,
+//     0X10, 0X7C, 0XFF, 0XFF, 0XFF, 0XFF, 0X9E, 0XEF, 0X6E, 0X6B, 0X0C, 0X5B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XDC, 0XD6, 0X25, 0X19, 0XFC, 0XD6, 0X9E, 0XEF, 0X7E, 0XEF, 0X5D, 0XE7, 0X7E, 0XEF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBF, 0XF7, 0XDB, 0XD6, 0XAF, 0X73,
+//     0X08, 0X3A, 0X9E, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XDC, 0XCE,
+//     0X6E, 0X63, 0X2A, 0X42, 0XBF, 0XF7, 0XFF, 0XFF, 0X52, 0X84, 0X8F, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X97, 0XAD, 0XAC, 0X4A, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X87, 0XA1, 0X63, 0XA8, 0X87, 0XC9, 0X1C, 0XFF, 0X49, 0X9A, 0XA3, 0X90, 0X4A, 0XC2,
+//     0X5E, 0XFF, 0XBF, 0XFF, 0XBE, 0XFF, 0X9E, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XBE, 0XFF, 0X5D, 0XFF, 0XC8, 0XA9, 0XC3, 0X88, 0X59, 0XFE, 0XBE, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0X9E, 0XFF, 0X31, 0XCC, 0XE4, 0X80, 0X18, 0XFE, 0XBE, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0X7F, 0XFF,
+//     0X68, 0XB1, 0X43, 0XB8, 0X84, 0XC8, 0X63, 0XC8, 0X63, 0XD0, 0X63, 0XA8, 0X35, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X7E, 0XEF, 0X67, 0X29, 0X7B, 0XC6, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X5E, 0XDF, 0X26, 0X19, 0X9E, 0XEF, 0XFF, 0XFF, 0X49, 0X42, 0X59, 0XC6,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X8E, 0X6B,
+//     0X11, 0X7C, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X7E, 0XEF, 0X46, 0X21, 0XFC, 0XDE, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X6A, 0X42, 0X14, 0X9D, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0XFF, 0XFF,
+//     0X87, 0X29, 0X39, 0XBE, 0XFF, 0XF7, 0XFF, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X87, 0X29, 0X7A, 0XCE, 0XFF, 0XFF, 0X52, 0X84, 0X8F, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X76, 0XA5, 0XCB, 0X4A, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X46, 0XA1, 0XA3, 0XB8, 0XE4, 0XB8, 0X3D, 0XFF, 0XAF, 0XCB, 0X84, 0XA8, 0X63, 0XB0,
+//     0X67, 0XB1, 0X55, 0XFD, 0XFC, 0XFE, 0X7D, 0XFF, 0X9E, 0XFF, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XDF, 0XFF, 0XBF, 0XFF, 0XFC, 0XFE, 0X04, 0X79, 0XC7, 0X89, 0X7D, 0XFF, 0XBF, 0XFF, 0XDF, 0XFF,
+//     0XDF, 0XFF, 0XFB, 0XFE, 0XC3, 0X88, 0X4D, 0XD3, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9E, 0XFF,
+//     0X4E, 0XDB, 0X63, 0XB0, 0XA4, 0XC8, 0X63, 0XC8, 0X83, 0XD0, 0X62, 0XA8, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X73, 0X8C, 0XE9, 0X39, 0X1D, 0XDF, 0XFF, 0XF7,
+//     0XFF, 0XFF, 0X7A, 0XCE, 0X1C, 0XDF, 0XFF, 0XFF, 0XD8, 0XB5, 0X32, 0X7C, 0X7F, 0XEF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XD0, 0X73, 0XAC, 0X4A, 0XFF, 0XFF, 0XDF, 0XFF, 0X4A, 0X42, 0X19, 0XBE,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X8F, 0X73,
+//     0XF0, 0X7B, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XF7, 0X86, 0X29, 0X9B, 0XD6, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X18, 0XB6, 0X25, 0X19, 0X5A, 0XC6, 0XFF, 0XFF, 0XFF, 0XF7, 0X1D, 0XDF, 0XBB, 0XCE,
+//     0XFF, 0XF7, 0XDC, 0XD6, 0X8F, 0X6B, 0X3D, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF7, 0X76, 0XA5,
+//     0X86, 0X29, 0X7E, 0XEF, 0XBB, 0XCE, 0XD0, 0X73, 0X3D, 0XE7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X15, 0X9D, 0XA7, 0X29, 0XBE, 0XF7, 0XFF, 0XFF, 0X52, 0X84, 0X8F, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X96, 0XAD, 0X8B, 0X4A, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFD, 0XFE, 0X87, 0XA9, 0X63, 0XB8, 0X63, 0XA8, 0XF8, 0XFD, 0XB8, 0XFD, 0X63, 0XA8, 0X84, 0XC0,
+//     0X83, 0XB8, 0X83, 0XA0, 0X25, 0X99, 0X86, 0X91, 0X6A, 0XAA, 0X55, 0XED, 0X9D, 0XFF, 0XDF, 0XFF,
+//     0XDF, 0XFF, 0XBF, 0XFF, 0X9E, 0XFF, 0XB2, 0XDC, 0XE3, 0X80, 0X14, 0XFD, 0X9F, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0X9E, 0XFF, 0XE7, 0XB1, 0X45, 0XA1, 0X9E, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBF, 0XFF,
+//     0X14, 0XFD, 0X62, 0XA0, 0X83, 0XC0, 0XA4, 0XD0, 0X62, 0XC8, 0X62, 0XA0, 0X76, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XF1, 0X7B, 0X46, 0X21, 0XCC, 0X52,
+//     0XAB, 0X52, 0X25, 0X21, 0X39, 0XC6, 0XFF, 0XFF, 0XDC, 0XD6, 0X8B, 0X4A, 0X66, 0X29, 0X6B, 0X4A,
+//     0X0D, 0X5B, 0XA8, 0X31, 0XE8, 0X31, 0X1D, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0X09, 0X3A, 0X39, 0XC6,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X29, 0X42,
+//     0X72, 0X8C, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X86, 0X29, 0X6E, 0X6B, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0X35, 0X9D, 0X46, 0X21, 0X4A, 0X42, 0X0D, 0X5B, 0X25, 0X21, 0XF4, 0X94,
+//     0XFF, 0XFF, 0X9F, 0XEF, 0X2D, 0X5B, 0X66, 0X21, 0X4A, 0X42, 0X4E, 0X5B, 0X29, 0X3A, 0X86, 0X21,
+//     0X18, 0XBE, 0XFF, 0XFF, 0X9E, 0XEF, 0X0C, 0X5B, 0X45, 0X21, 0X29, 0X42, 0X4E, 0X63, 0XE8, 0X31,
+//     0X87, 0X29, 0X18, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0X31, 0X84, 0X6E, 0X6B, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X76, 0XAD, 0X6A, 0X42, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X66, 0XA1, 0X84, 0XB8, 0X43, 0XB0, 0X6E, 0XD3, 0X1D, 0XFF, 0X05, 0XB1, 0X63, 0XB8,
+//     0XA3, 0XC0, 0XA3, 0XB8, 0XA3, 0XA0, 0X83, 0X98, 0X63, 0XA0, 0XA3, 0X98, 0X4D, 0XC3, 0X7D, 0XFF,
+//     0XDF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0X9D, 0XFF, 0XC3, 0X90, 0X29, 0XBA, 0X9E, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XBE, 0XFF, 0XEF, 0XEB, 0XA3, 0X88, 0X1C, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XBF, 0XFF,
+//     0X79, 0XFE, 0X62, 0X98, 0XE4, 0XC0, 0X63, 0XC8, 0X83, 0XC8, 0X83, 0XA0, 0X75, 0XED, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC, 0XD6, 0X35, 0X9D,
+//     0X15, 0XA5, 0XFB, 0XDE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC, 0XDE, 0X35, 0XA5,
+//     0XF4, 0X9C, 0X18, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XBB, 0XD6, 0X9F, 0XF7,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XF8, 0XBD,
+//     0XBE, 0XF7, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X7A, 0XCE, 0XF8, 0XBD, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X5D, 0XE7, 0X76, 0XAD, 0XF4, 0X9C, 0X9A, 0XD6, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X3D, 0XE7, 0X96, 0XAD, 0XB3, 0X94, 0XB7, 0XB5, 0X7E, 0XEF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X1C, 0XE7, 0X55, 0XAD, 0XD3, 0X94, 0XB7, 0XB5,
+//     0X9E, 0XEF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X3D, 0XE7, 0X1C, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X7E, 0XEF, 0X9A, 0XCE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0XA7, 0XA1, 0XA4, 0XB8, 0X83, 0XB8, 0X05, 0X99, 0XFC, 0XFE, 0X11, 0XFC, 0XA3, 0XA0,
+//     0XA3, 0XB0, 0XE4, 0XB0, 0X52, 0XFC, 0X36, 0XFD, 0X6B, 0XDA, 0XA3, 0XA0, 0XA3, 0X90, 0XD3, 0XF4,
+//     0X9E, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X7D, 0XFF, 0XEB, 0XD2, 0XC3, 0X90, 0X5E, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0X9E, 0XFF, 0X55, 0XFD, 0XC3, 0X88, 0XD7, 0XF5, 0XDF, 0XFF, 0XFF, 0XFF, 0X9E, 0XFF,
+//     0X39, 0XFE, 0XA3, 0XA0, 0X83, 0XB8, 0XA4, 0XD0, 0X63, 0XC8, 0X62, 0X98, 0X96, 0XF5, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0XA7, 0X99, 0XA3, 0XB0, 0X82, 0XC0, 0X62, 0XA8, 0X11, 0XFC, 0XFD, 0XFE, 0X66, 0X89,
+//     0XE4, 0X88, 0X7A, 0XFE, 0X7E, 0XFF, 0X5E, 0XFF, 0X5E, 0XFF, 0X2E, 0XC3, 0X63, 0X98, 0XE8, 0XB9,
+//     0XBD, 0XFF, 0XFF, 0XFF, 0XFE, 0XFF, 0XBE, 0XFF, 0X50, 0XF4, 0XC3, 0X88, 0X9A, 0XFE, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XBF, 0XFF, 0XD7, 0XFD, 0XE3, 0X88, 0X13, 0XD5, 0XBE, 0XFF, 0XDF, 0XFF, 0X7E, 0XFF,
+//     0X09, 0XC2, 0X83, 0XB8, 0X63, 0XC8, 0X63, 0XC8, 0X83, 0XD0, 0X83, 0XA0, 0X55, 0XED, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3E, 0XFF, 0X87, 0X99, 0XA2, 0XA8, 0XC3, 0XC8, 0X83, 0XC0, 0X62, 0XA0, 0X1D, 0XFF, 0XF8, 0XFD,
+//     0X08, 0X8A, 0X7D, 0XFF, 0XBE, 0XFF, 0XDF, 0XFF, 0XBF, 0XFF, 0X19, 0XFE, 0X83, 0XA8, 0XE5, 0XA8,
+//     0X7D, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XBE, 0XFF, 0XB3, 0XFC, 0XC3, 0X80, 0X59, 0XF6, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XBF, 0XFF, 0X7A, 0XFE, 0X82, 0X80, 0X91, 0XE4, 0X5D, 0XFF, 0X5D, 0XFF, 0X11, 0XE4,
+//     0X43, 0XA0, 0X84, 0XC8, 0X84, 0XC8, 0X84, 0XD0, 0X63, 0XC8, 0X63, 0XA8, 0X56, 0XF5, 0XDF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XDF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X67, 0X99, 0XC4, 0XB0, 0X62, 0XC0, 0XA3, 0XD0, 0X62, 0XB8, 0X29, 0XBA, 0X3D, 0XFF,
+//     0XD3, 0XCC, 0XBE, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9E, 0XFF, 0X55, 0XFD, 0X63, 0XA8, 0X26, 0XB1,
+//     0X5E, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0X9F, 0XFF, 0XB4, 0XFC, 0XA3, 0X80, 0X59, 0XF6, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XBE, 0XFF, 0X3A, 0XFE, 0XA4, 0X90, 0X66, 0XB1, 0X87, 0XC1, 0X67, 0XC1, 0X63, 0XA8,
+//     0XA4, 0XC0, 0X84, 0XC8, 0X83, 0XC0, 0X84, 0XC8, 0X63, 0XC8, 0X63, 0XA8, 0X56, 0XFD, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X67, 0XA1, 0XA4, 0XB8, 0X83, 0XC8, 0X62, 0XC8, 0XA3, 0XC8, 0X83, 0XA0, 0XB0, 0XE3,
+//     0X5E, 0XFF, 0XFB, 0XFE, 0XBE, 0XFF, 0XDE, 0XFF, 0XDB, 0XFE, 0XA7, 0XA9, 0X63, 0XA0, 0X6A, 0XCA,
+//     0X9F, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0X9F, 0XFF, 0X8F, 0XE3, 0XE4, 0X90, 0XDB, 0XFE, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XBE, 0XFF, 0XD8, 0XFD, 0XA4, 0X98, 0XA4, 0XB0, 0X83, 0XB0, 0X84, 0XB0, 0XC9, 0XD9,
+//     0X42, 0XB8, 0X83, 0XC8, 0X83, 0XC8, 0X63, 0XC0, 0X84, 0XC8, 0X83, 0XA8, 0X35, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X67, 0XA1, 0X84, 0XB8, 0X63, 0XC8, 0XA3, 0XC8, 0X82, 0XC0, 0X83, 0XC0, 0X63, 0XA0,
+//     0XF1, 0XEB, 0X3E, 0XFF, 0X34, 0XDD, 0X08, 0X8A, 0XC4, 0X98, 0X83, 0XA8, 0XE4, 0XA8, 0X9B, 0XFE,
+//     0XBF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0X7D, 0XFF, 0X08, 0XBA, 0X25, 0X99, 0X9E, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0X9E, 0XFF, 0XD4, 0XFC, 0X83, 0X98, 0XA3, 0XA0, 0XE4, 0X98, 0X19, 0XFE, 0XFD, 0XFE,
+//     0XE5, 0XB8, 0X83, 0XC8, 0X63, 0XC8, 0X84, 0XD0, 0X63, 0XC8, 0X63, 0XA0, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X1D, 0XFF, 0X87, 0XA1, 0X64, 0XB8, 0X84, 0XC8, 0XA3, 0XC0, 0XA3, 0XC0, 0X83, 0XC8, 0X84, 0XC0,
+//     0X84, 0XA0, 0X4E, 0XE3, 0XFC, 0XFE, 0XF7, 0XFD, 0X46, 0XB1, 0X83, 0XA0, 0XE4, 0X98, 0X72, 0XEC,
+//     0X7E, 0XFF, 0X9E, 0XFF, 0X9D, 0XFF, 0X99, 0XFE, 0X82, 0X98, 0X49, 0XD2, 0X3D, 0XFF, 0X9E, 0XFF,
+//     0XBF, 0XFF, 0XDC, 0XFE, 0X4A, 0XB2, 0XA3, 0X90, 0XAB, 0XCA, 0XFC, 0XFE, 0X1D, 0XFF, 0XE9, 0XA9,
+//     0XA3, 0XB0, 0X63, 0XC8, 0X63, 0XC8, 0X84, 0XD0, 0X63, 0XC8, 0X63, 0XA0, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X86, 0XA1, 0XA4, 0XB8, 0X63, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X63, 0XC8, 0X84, 0XC8,
+//     0X84, 0XC0, 0X63, 0XB0, 0XA8, 0XB9, 0XBB, 0XFE, 0X3C, 0XFF, 0XF3, 0XF4, 0XA7, 0X99, 0XC4, 0X80,
+//     0X0A, 0XAA, 0XF1, 0XE3, 0X76, 0XFD, 0X8A, 0XD2, 0X62, 0XA8, 0X62, 0XB0, 0XE4, 0XA8, 0XAC, 0XD2,
+//     0XC8, 0X99, 0X05, 0X71, 0X8A, 0XA2, 0X39, 0XFE, 0X1C, 0XFF, 0X55, 0XFD, 0XE5, 0XA8, 0X83, 0XB0,
+//     0X83, 0XC0, 0X83, 0XC8, 0X83, 0XC0, 0X83, 0XC0, 0X63, 0XC8, 0X63, 0XA8, 0X55, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X86, 0X99, 0XA4, 0XB8, 0X83, 0XC8, 0X63, 0XC0, 0X83, 0XC8, 0XA4, 0XD0, 0X63, 0XC8,
+//     0X84, 0XD0, 0X63, 0XC0, 0X84, 0XB0, 0X83, 0X90, 0X6E, 0XCB, 0X3D, 0XFF, 0XFC, 0XFE, 0X19, 0XFE,
+//     0X8F, 0XEB, 0X09, 0XBA, 0X05, 0XA1, 0X83, 0X98, 0XE4, 0XA8, 0XE5, 0XB0, 0X26, 0XC1, 0X4A, 0XDA,
+//     0X52, 0XFC, 0XBC, 0XFE, 0X1D, 0XFF, 0X59, 0XFE, 0X49, 0XBA, 0XA3, 0X98, 0XA4, 0XC0, 0X43, 0XC0,
+//     0X63, 0XC8, 0X83, 0XC8, 0X83, 0XC0, 0XA3, 0XC8, 0X84, 0XD0, 0X63, 0XA8, 0X55, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X87, 0XA1, 0X84, 0XB0, 0X84, 0XC8, 0XA4, 0XC8, 0X83, 0XC0, 0X63, 0XC8, 0X43, 0XD0,
+//     0X63, 0XC8, 0XA4, 0XC8, 0X63, 0XC0, 0XC5, 0XC0, 0X84, 0XB0, 0X63, 0XA0, 0X8B, 0XDA, 0X14, 0XFD,
+//     0XFC, 0XFE, 0XFD, 0XFE, 0XFD, 0XFE, 0X1D, 0XFF, 0X1D, 0XFF, 0XFD, 0XFE, 0X1D, 0XFF, 0XFC, 0XFE,
+//     0X9A, 0XFE, 0X92, 0XFC, 0XC7, 0XC9, 0X41, 0XA0, 0XA3, 0XB8, 0XA3, 0XC0, 0X63, 0XC0, 0XA4, 0XC8,
+//     0X84, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0X63, 0XC8, 0X42, 0XA0, 0X76, 0XFD, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFC, 0XFE, 0X87, 0XA1, 0XA5, 0XB8, 0X84, 0XC8, 0XC4, 0XC0, 0XC4, 0XC0, 0X84, 0XC8, 0X84, 0XD0,
+//     0X63, 0XC8, 0XA4, 0XC8, 0X83, 0XC0, 0X84, 0XC8, 0X64, 0XC8, 0X84, 0XC0, 0X83, 0XA8, 0XC3, 0XA0,
+//     0XC3, 0X90, 0XC8, 0XA1, 0X8B, 0XBA, 0XED, 0XC2, 0XED, 0XBA, 0XED, 0XBA, 0X6A, 0XAA, 0X86, 0X99,
+//     0XA2, 0X90, 0X82, 0X98, 0X82, 0XB0, 0XC4, 0XC8, 0X83, 0XC8, 0X63, 0XC0, 0XA4, 0XC8, 0X83, 0XC0,
+//     0XA4, 0XC0, 0X84, 0XC8, 0X83, 0XC8, 0X83, 0XC8, 0XA4, 0XC8, 0X63, 0XA0, 0X56, 0XFD, 0X9E, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X3D, 0XFF, 0X46, 0X91, 0X43, 0XA8, 0X44, 0XC0, 0X63, 0XB0, 0X83, 0XB0, 0X83, 0XB8, 0X63, 0XB8,
+//     0X63, 0XB8, 0X62, 0XB8, 0X83, 0XB8, 0X63, 0XB8, 0X83, 0XB8, 0X63, 0XB8, 0X83, 0XB8, 0X62, 0XA8,
+//     0XA3, 0XA8, 0X83, 0XA0, 0X62, 0XA0, 0X83, 0XA0, 0X83, 0XA0, 0XA4, 0XA0, 0X63, 0XA0, 0X83, 0XA0,
+//     0XC4, 0XB0, 0X83, 0XA8, 0X83, 0XB0, 0X83, 0XB8, 0X42, 0XB0, 0X83, 0XB8, 0X84, 0XB8, 0X63, 0XB0,
+//     0X43, 0XB8, 0X63, 0XB8, 0X63, 0XB8, 0X63, 0XB8, 0X63, 0XB0, 0X83, 0X98, 0X56, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0X7E, 0XFF, 0X4E, 0XBB, 0X8C, 0XCA, 0XAC, 0XDA, 0XAC, 0XCA, 0XCC, 0XCA, 0XAB, 0XCA, 0XAB, 0XD2,
+//     0XAB, 0XD2, 0XAB, 0XCA, 0XEC, 0XDA, 0X8B, 0XD2, 0XAB, 0XD2, 0XAC, 0XD2, 0XCB, 0XDA, 0XAB, 0XD2,
+//     0XAB, 0XD2, 0XCB, 0XD2, 0X8A, 0XD2, 0XAB, 0XD2, 0X8B, 0XD2, 0X8B, 0XD2, 0X8B, 0XD2, 0XAC, 0XD2,
+//     0X8B, 0XCA, 0XAC, 0XD2, 0XCC, 0XD2, 0XAC, 0XD2, 0XAC, 0XD2, 0XAC, 0XD2, 0XCC, 0XD2, 0XCC, 0XD2,
+//     0XAC, 0XD2, 0XAC, 0XD2, 0XAC, 0XD2, 0XAC, 0XD2, 0XAB, 0XCA, 0XCC, 0XBA, 0XF8, 0XF5, 0XBF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XBF, 0XFF, 0X7E, 0XFF, 0X9F, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0XBE, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF,
+//     0X9E, 0XFF, 0X9E, 0XFF, 0X7E, 0XFF, 0X9F, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF,
+//     0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF,
+//     0X9E, 0XFF, 0X9F, 0XFF, 0X7F, 0XFF, 0X9F, 0XFF, 0X7E, 0XFF, 0X9E, 0XFF, 0X7E, 0XFF, 0X9E, 0XFF,
+//     0X9F, 0XFF, 0X7E, 0XFF, 0X7E, 0XFF, 0X9E, 0XFF, 0X9E, 0XFF, 0X9D, 0XFF, 0XDF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+//     0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF,
+// };
 
 // static xQueueHandle gpio_evt_queue = NULL;
 // static void IRAM_ATTR gpio_isr_handler(void* arg)
@@ -213,38 +942,8 @@ void app_main(void)
 
 // }
 
-// void lvgl_init(void);
-// #define LVGL_TICK_PERIOD_MS    1
-// static void example_increase_lvgl_tick(void *arg)
-// {
-//     /* Tell LVGL how many milliseconds has elapsed */
-//     lv_tick_inc(LVGL_TICK_PERIOD_MS);
-// }
-// void lvgl_init(void)
-// {
-//     const esp_timer_create_args_t lvgl_tick_timer_args = {
-//         .callback = &example_increase_lvgl_tick,
-//         .name = "lvgl_tick"
-//     };
-//     esp_timer_handle_t lvgl_tick_timer = NULL;
-//     ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
-//     ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_TICK_PERIOD_MS * 1000));  //
 
-//     /* LVGL init */
-//     lv_init();                  //内核初始化
-//     lv_port_disp_init();	    //接口初始化
-//     lv_port_indev_init();       //输入设备初始化
-//     // lv_port_fs_init();       //文件系统初始化
 
-//     /* example lvgl demos */
-//     //lv_demo_music();
-//     // lv_demo_widgets();
-//     // lv_demo_keypad_encoder();    
-//      //lv_demo_benchmark();  
-//      //lv_demo_stress();  
-     
-//     lv_example_get_started_1();
-// }
 
 /* *******************************************************************************************
  * This callback function runs once per frame. Use it to perform any
@@ -313,3 +1012,39 @@ void app_main(void)
     // } else {
     //     uvc_streaming_start(frame_cb, (void *)(lcd_buffer));
     // }
+
+
+
+
+        /* malloc a buffer for RGB565 data, as 320*240*2 = 153600B,
+    here malloc a smaller buffer refresh lcd with steps */
+    // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    // assert(lcd_buffer != NULL);
+    
+    /* Boot animation useful for LCD checking and camera power-on waiting, But consumes much flash */
+// #if 1
+//     esp_vfs_spiffs_conf_t spiffs_config = {
+//         .base_path              = "/spiffs",
+//         .partition_label        = NULL,
+//         .max_files              = 5,
+//         .format_if_mount_failed = false
+//     };
+
+//     ESP_ERROR_CHECK(esp_vfs_spiffs_register(&spiffs_config));
+
+//     // for (size_t i = 10; i <= 80; i += 2)    //start movie
+//     // {
+//     //     char file_name[64] = {0};
+//     //     sprintf(file_name, "/spiffs/r%03d.jpg", i);
+//     //     FILE *fd = fopen(file_name, "r");
+//     //     int read_bytes = fread(jpeg_buf, 1, BOOT_ANIMATION_MAX_SIZE, fd);
+//     //     fclose(fd);
+//     //     mjpegdraw(jpeg_buf, read_bytes, lcd_buffer, lcd_write_bitmap);
+//     //     ESP_LOGD(TAG, "file_name: %s, fd: %p, read_bytes: %d, free_heap: %d", file_name, fd, read_bytes, esp_get_free_heap_size());
+//     //     // if(i == 10 )//|| i == 80)
+//     //     //     ESP_LOG_BUFFER_HEX(TAG, jpeg_buf, read_bytes);
+//     // }
+//     //free(jpeg_buf);
+//     //free(lcd_buffer);
+// #endif
+ //ESP_LOGI(TAG, "&lcd_buffer:%d",*lcd_buffer);

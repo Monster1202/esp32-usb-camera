@@ -321,7 +321,7 @@ void data_publish(char *data,uint8_t case_pub)
 
     cJSON*root = cJSON_CreateObject();
     if(case_pub == 0){
-        cJSON_AddNumberToObject(root, "device_sn",brush_buf.uuid);
+        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(brush_buf.uuid));
         cJSON_AddNumberToObject(root, "timestamp",brush_buf.timestamp);
         cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PNEUMATIC_BRUSH"));
         cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(brush_buf.version));
@@ -340,7 +340,7 @@ void data_publish(char *data,uint8_t case_pub)
         cJSON_AddItemToObject(root, "msg_id",cJSON_CreateString(brush_buf.msg_id)); 
         }
     else if(case_pub == 2){
-        cJSON_AddNumberToObject(root, "device_sn",blister_buf.uuid);
+        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(blister_buf.uuid));
         cJSON_AddNumberToObject(root, "timestamp",blister_buf.timestamp);
         cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PARAMETER_BLISTER"));
         cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(blister_buf.version));
@@ -359,7 +359,7 @@ void data_publish(char *data,uint8_t case_pub)
         cJSON_AddItemToObject(root, "msg_id",cJSON_CreateString(blister_buf.msg_id)); //
         }
     else if(case_pub == 4){
-        cJSON_AddNumberToObject(root, "device_sn",remote_buf.uuid);
+        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(remote_buf.uuid));
         cJSON_AddNumberToObject(root, "timestamp",remote_buf.timestamp);
         cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PARAMETER_REMOTE"));
         cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(remote_buf.version));

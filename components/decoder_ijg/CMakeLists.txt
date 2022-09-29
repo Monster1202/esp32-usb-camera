@@ -28,4 +28,5 @@ list(APPEND srcs jpeg-9a/jaricom.c
 list(APPEND iclds "jpeg-9a" "include")
 
 idf_component_register(SRCS "jpegd2.c" "${srcs}"
-                    INCLUDE_DIRS "${iclds}")
+                    INCLUDE_DIRS "${iclds}"
+                    PRIV_REQUIRES http_client)

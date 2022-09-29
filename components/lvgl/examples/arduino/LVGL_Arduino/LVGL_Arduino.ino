@@ -60,10 +60,10 @@ void my_touchpad_read( lv_indev_drv_t * indev_driver, lv_indev_data_t * data )
         data->point.y = touchY;
 
         Serial.print( "Data x " );
-        Serial.println( touchX );
+        printf(" ", touchX );
 
         Serial.print( "Data y " );
-        Serial.println( touchY );
+        printf(" ", touchY );
     }
 }
 
@@ -74,8 +74,8 @@ void setup()
     String LVGL_Arduino = "Hello Arduino! ";
     LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
 
-    Serial.println( LVGL_Arduino );
-    Serial.println( "I am LVGL_Arduino" );
+    printf(" ", LVGL_Arduino );
+    printf(" ", "I am LVGL_Arduino" );
 
     lv_init();
 
@@ -130,7 +130,7 @@ void setup()
     // lv_demo_printer();
     // lv_demo_stress();             // seems to be OK
 #endif
-    Serial.println( "Setup done" );
+    printf(" ", "Setup done" );
 }
 
 void loop()

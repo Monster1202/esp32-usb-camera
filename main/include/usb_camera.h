@@ -12,6 +12,7 @@ extern "C" {
 #define CONFIG_LCD_BUF_WIDTH 640
 #define CONFIG_LCD_BUF_HIGHT 48  //48
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
+void setup(void);
 /* USB Camera Descriptors Related MACROS,
 the quick demo skip the standred get descriptors process,
 users need to get params from camera descriptors from PC side,
@@ -89,6 +90,7 @@ then hardcode the related MACROS below
 #define DEMO_MAX_TRANFER_SIZE (CONFIG_LCD_BUF_WIDTH * CONFIG_LCD_BUF_HIGHT * 2 + 64)
 //#define DEMO_MAX_TRANFER_SIZE (640 * 480*2)
 
+//void lv_example_sjpg_2(void);
 #ifdef __cplusplus
 }
 #endif

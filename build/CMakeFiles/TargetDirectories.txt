@@ -725,6 +725,13 @@
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/codec/CMakeFiles/rebuild_cache.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/codec/CMakeFiles/install.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/codec/CMakeFiles/list_install_components.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install/strip.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install/local.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/__idf_http_client.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/edit_cache.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/rebuild_cache.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install.dir
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/list_install_components.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/decoder_ijg/CMakeFiles/install/strip.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/decoder_ijg/CMakeFiles/install/local.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/decoder_ijg/CMakeFiles/__idf_decoder_ijg.dir
@@ -775,13 +782,6 @@
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/gpio_ctrl/CMakeFiles/rebuild_cache.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/gpio_ctrl/CMakeFiles/install.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/gpio_ctrl/CMakeFiles/list_install_components.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install/strip.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install/local.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/__idf_http_client.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/edit_cache.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/rebuild_cache.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/install.dir
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/CMakeFiles/list_install_components.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/key/CMakeFiles/install/strip.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/key/CMakeFiles/install/local.dir
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/key/CMakeFiles/__idf_key.dir

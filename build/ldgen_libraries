@@ -77,6 +77,7 @@
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/bsp/libbsp.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/cJSON/libcJSON.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/codec/libcodec.a
+/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/libhttp_client.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/decoder_ijg/libdecoder_ijg.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/esp-sr/libesp-sr.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/file_system/libfile_system.a
@@ -84,7 +85,6 @@
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/wifi/libwifi.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/mqtt_app/libmqtt_app.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/gpio_ctrl/libgpio_ctrl.a
-/home/yuan/esp/esp32-usb-camera/build/esp-idf/http_client/libhttp_client.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/key/libkey.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/libhelix-mp3/liblibhelix-mp3.a
 /home/yuan/esp/esp32-usb-camera/build/esp-idf/lvgl/liblvgl.a
