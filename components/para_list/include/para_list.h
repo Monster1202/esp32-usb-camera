@@ -15,10 +15,10 @@ extern "C" {
 #define DEVICE_TYPE_REMOTE 
 
 
-
 #define BACKUP_MQTT_BROKER_URL     "mqtt://10.42.0.1"    
-#define BACKUP_EXAMPLE_ESP_WIFI_SSID      "SHKJ2020" //"CLEANING-SYSTEM"  
-#define BACKUP_EXAMPLE_ESP_WIFI_PASS      "shkj1234." //"12345678"    
+#define BACKUP_EXAMPLE_ESP_WIFI_SSID      "CLEANING-SYSTEM"  //"yyg" //"SHKJ2020" //
+#define BACKUP_EXAMPLE_ESP_WIFI_PASS      "12345678" //"shkj1234." //"12345678"    
+#define http_get_URL     "http://10.42.0.1:8080/?action=stream"  //"http://172.16.170.189:8080/?action=stream",//"http://10.42.0.1:8080/?action=stream",////"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",
 
 typedef struct
 {

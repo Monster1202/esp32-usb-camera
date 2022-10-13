@@ -17,7 +17,7 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID "CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  ////
+#define EXAMPLE_ESP_WIFI_SSID "yyg"//"CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  ////
 #define EXAMPLE_ESP_WIFI_PASS "12345678"//"shkj1234."  //CONFIG_ESP_WIFI_PASSWORD  //
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  150//CONFIG_ESP_MAXIMUM_RETRY
@@ -77,13 +77,13 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
 void wifi_init_sta(void)
 {
-    //uint8_t test_ssid[32] = {0};
-    // char *wifi_ssid = {0};
-    // char *wifi_pass = {0};
-    // wifi_ssid = parameter_read_wifi_ssid();
-    // wifi_pass = parameter_read_wifi_pass();
-    // ESP_LOGI(TAG, "wifi_ssid:%s",wifi_ssid); 
-    // ESP_LOGI(TAG, "wifi_pass:%s",wifi_pass); 
+    uint8_t test_ssid[32] = {0};
+    char *wifi_ssid = {0};
+    char *wifi_pass = {0};
+    wifi_ssid = parameter_read_wifi_ssid();
+    wifi_pass = parameter_read_wifi_pass();
+    ESP_LOGI(TAG, "wifi_ssid:%s",wifi_ssid); 
+    ESP_LOGI(TAG, "wifi_pass:%s",wifi_pass); 
 
     s_wifi_event_group = xEventGroupCreate();
 
@@ -118,14 +118,14 @@ void wifi_init_sta(void)
 	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
         },
     };
-    // ESP_LOGI(TAG, "strlen(wifi_ssid) + 1:%d",strlen(wifi_ssid) + 1);
-    // for(uint8_t i=0; i< strlen(wifi_ssid) + 1;i++)
-    //     wifi_config.sta.ssid[i] = wifi_ssid[i];
-    // ESP_LOGI(TAG, "strlen(wifi_pass) + 1:%d",strlen(wifi_pass) + 1);
-    // for(uint8_t i=0; i< strlen(wifi_pass) + 1;i++)
-    //     wifi_config.sta.password[i] = wifi_pass[i];
-    // ESP_LOGI(TAG, "wifi_ssid:%s",wifi_config.sta.ssid); 
-    // ESP_LOGI(TAG, "wifi_pass:%s",wifi_config.sta.password); 
+    ESP_LOGI(TAG, "strlen(wifi_ssid) + 1:%d",strlen(wifi_ssid) + 1);
+    for(uint8_t i=0; i< strlen(wifi_ssid) + 1;i++)
+        wifi_config.sta.ssid[i] = wifi_ssid[i];
+    ESP_LOGI(TAG, "strlen(wifi_pass) + 1:%d",strlen(wifi_pass) + 1);
+    for(uint8_t i=0; i< strlen(wifi_pass) + 1;i++)
+        wifi_config.sta.password[i] = wifi_pass[i];
+    ESP_LOGI(TAG, "wifi_ssid:%s",wifi_config.sta.ssid); 
+    ESP_LOGI(TAG, "wifi_pass:%s",wifi_config.sta.password); 
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );

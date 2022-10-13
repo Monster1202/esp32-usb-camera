@@ -1,4 +1,4 @@
-/* * Data converted from /home/yuan/esp/esp32-usb-camera/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/yuan/esp/esp32-video-remote/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

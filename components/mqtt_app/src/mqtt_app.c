@@ -158,12 +158,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
-    // char *broker_url = {0};
-    // broker_url = parameter_read_broker_url();
-    // printf("parameter_read_broker_url:%s",broker_url); 
+    char *broker_url = {0};
+    broker_url = parameter_read_broker_url();
+    printf("parameter_read_broker_url:%s",broker_url); 
 
     esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = MQTT_BROKER_URL,//CONFIG_BROKER_URL,  broker_url,//
+        .uri = broker_url,// MQTT_BROKER_URL,//CONFIG_BROKER_URL,  
         .task_prio = 5,//MQTT_PRIO,
     };
     //strcpy(mqtt_cfg.uri,broker_url);
@@ -359,7 +359,10 @@ void data_publish(char *data,uint8_t case_pub)
         cJSON_AddItemToObject(root, "msg_id",cJSON_CreateString(blister_buf.msg_id)); //
         }
     else if(case_pub == 4){
-        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(remote_buf.uuid));
+        char string_uuid[20] = "0";//7cdfa1e592e0
+        hex2str((uint8_t *)remote_buf.uuid,6,string_uuid);
+        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(string_uuid));
+        //cJSON_AddNumberToObject(root, "device_sn",);
         cJSON_AddNumberToObject(root, "timestamp",remote_buf.timestamp);
         cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PARAMETER_REMOTE"));
         cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(remote_buf.version));
@@ -404,4 +407,49 @@ void mqtt_reset(void)
 }
 
 
+void hex2str(uint8_t *input, uint16_t input_len, char *output)
+{
+    char *hexEncode = "0123456789ABCDEF";
+    int i = 0, j = 0;
+
+    for (i = 0; i < input_len; i++) {
+        output[j++] = hexEncode[(input[i] >> 4) & 0xf];
+        output[j++] = hexEncode[(input[i]) & 0xf];
+    }
+}
+
+#define isDigit(c)             (((c) <= '9' && (c) >= '0') ? (1) : (0))
+
+static uint8_t hex2dec(char hex)
+{
+    if (isDigit(hex)) {
+        return (hex - '0');
+    }
+    if (hex >= 'a' && hex <= 'f') {
+        return (hex - 'a' + 10);
+    }
+    if (hex >= 'A' && hex <= 'F') {
+        return (hex - 'A' + 10);
+    }
+
+    return 0;
+}
+
+static int str2hex(char *input, int input_len, unsigned char *output, int max_len)
+{
+    int             i = 0;
+    uint8_t         ch0, ch1;
+
+    if (input_len % 2 != 0) {
+        return -1;
+    }
+
+    while (i < input_len / 2 && i < max_len) {
+        ch0 = hex2dec((char)input[2 * i]);
+        ch1 = hex2dec((char)input[2 * i + 1]);
+        output[i] = (ch0 << 4 | ch1);
+        i++;
+    }
+    return i;
+}
 

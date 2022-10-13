@@ -25,10 +25,13 @@
 #include "jpegd2.h"
 #include "usb_camera.h"
 #include "esp_task_wdt.h"
+#include "JPEGDEC.h"
+#include "para_list.h"
+
 #define BOOT_ANIMATION_MAX_SIZE (8 * 1024)
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 45 * 1024
-#define TRANSFER_BUFFER (60 * 1024)
+#define TRANSFER_BUFFER (100 * 1024)
 static const char *TAG = "HTTP_CLIENT";
 static const char *TAG1 = "lcd_draw";
 typedef struct{
@@ -54,7 +57,10 @@ extern const char howsmyssl_com_root_cert_pem_end[]   asm("_binary_howsmyssl_com
 extern const char postman_root_cert_pem_start[] asm("_binary_postman_root_cert_pem_start");
 extern const char postman_root_cert_pem_end[]   asm("_binary_postman_root_cert_pem_end");
 
-
+void frame_send(int y_lineindex,uint8_t *send_buffer);
+void JPEGDraw(JPEGDRAW *pDraw);
+void app_jpegdec(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb);
+JPEGIMAGE jpg;
 
 int len_decoder(char *recv_buf,int recv_len,int head_len)
 {
@@ -89,7 +95,6 @@ int len_decoder(char *recv_buf,int recv_len,int head_len)
 
 static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 {
-    //ESP_LOGI(TAG, "&sbuffer:%x",sbuffer);
     //char output_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};   // Buffer to store response of http request
     char *buffer = malloc(MAX_HTTP_RECV_BUFFER + 1);
 
@@ -98,7 +103,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
         return;
     }
     esp_http_client_config_t config = {
-        .url = "http://10.42.0.1:8080/?action=stream",//"http://172.16.170.189:8080/?action=stream",//"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",//"http://10.42.0.1:8080/?action=stream",//"http://10.42.0.1:1111/video_feed",//"http://172.16.171.97:8080/?action=stream","http://10.0.2.15:8080/?action=stream",//"http://i2.hdslb.com/bfs/face/bce14f5e3af4bca480fc7de227986ba304507078.jpg",////"http://httpbin.org/get",
+        .url = http_get_URL,//"http://10.42.0.1:8080/?action=stream",////"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",//"http://10.42.0.1:8080/?action=stream",//"http://10.42.0.1:1111/video_feed",//"http://172.16.171.97:8080/?action=stream","http://10.0.2.15:8080/?action=stream",//"http://i2.hdslb.com/bfs/face/bce14f5e3af4bca480fc7de227986ba304507078.jpg",////"http://httpbin.org/get",
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err;
@@ -136,17 +141,12 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     data_send.sender = content_length;
     data_send.msg = heap_caps_malloc(TRANSFER_BUFFER, MALLOC_CAP_SPIRAM |  MALLOC_CAP_8BIT);
     memcpy(data_send.msg, sbuffer, content_length); 
-    // data_send.sender = 1314;
-    // data_send.msg = (char *)malloc(20);  //分配所需的内存空间，并返回一个指向它的指针，里面传入的参数是SIZE。
-    // memset(data_send.msg, 0, 20);  //清空这个data_send，也就是上面分配的这个空间
-    // memcpy(data_send.msg, "hello world", strlen("hello world"));  
     xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
-
+    
     // int count_draw =0;
-    // while(1){
-    //     mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
+     
+         //mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
     //     ESP_LOGI(TAG1,"count_draw:%d", count_draw++);
-    // }
     
     counter++;
     if(counter%30 == 1)
@@ -164,49 +164,17 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 
 void http_test_task(void *pvParameters)
 {
-    // uint8_t *jpeg_buf = (uint8_t *)heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE,  MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);//|
-    // assert(jpeg_buf != NULL);
-    // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    // assert(lcd_buffer != NULL);
-    //printf("START http example");
+    //  uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    //  assert(lcd_buffer != NULL);
     ESP_LOGI(TAG, "START http example");
     vTaskDelay(5000 / portTICK_RATE_MS); 
-
-
-    // xqueue1 = xQueueCreate( TRANSFER_BUFFER, sizeof( TRANSFER_BUFFER ) );
-    //xqueue1 = xQueueCreate( BOOT_ANIMATION_MAX_SIZE, sizeof(BOOT_ANIMATION_MAX_SIZE) );//
-    //xqueue2 = xQueueCreate( TRANSFER_BUFFER, sizeof( Data) );
-    setup();
+    print_heapsize();
+    //xqueue2 = xQueueCreate( 1, sizeof(Data));
     while(1)
     {    
-        vTaskDelay(90 / portTICK_RATE_MS);
-        //ESP_LOGI(TAG, "START http example");
-        http_perform_as_stream_reader(pvParameters,0);
-        //http_perform_as_stream_reader(jpeg_buf,buffer);  
-        //memset(data_send.msg, 0, BOOT_ANIMATION_MAX_SIZE);     
-        //data_send.sender = http_perform_as_stream_reader(pvParameters,data_send.msg);
-//        http_perform_as_stream_reader(pvParameters,data_send.msg);
-        //printf("data_send.sender:%d\r\n",data_send.sender);
-        //xStatus = xQueueSendToFront( xqueue0, &data_send, xTicksToWait );
-        //frame_send(0,0);
+        //vTaskDelay(20 / portTICK_RATE_MS);
+        http_perform_as_stream_reader(pvParameters,0);      
     }           
-}
-
-void frame_send(int y_lineindex,uint8_t *send_buffer)
-{
-    BaseType_t xStatus;
-    const TickType_t xTicksToWait = pdMS_TO_TICKS(100);
-    //char send_str[16] = "HELLO WORLD!!!!";
-    // Data data1_send;
-    // data1_send.sender = y_lineindex;
-    // data1_send.msg = (char *)send_buffer;
-    //memset(data_send.msg, 0, BOOT_ANIMATION_MAX_SIZE);
-    //memcpy(data_send.msg,send_buffer,DEMO_MAX_TRANFER_SIZE-64);
-    //xStatus = xQueueSendToFront( xqueue2, &data1_send, xTicksToWait );
-    //lcd_write_bitmap(0,y_lineindex-CONFIG_LCD_BUF_HIGHT, CONFIG_LCD_BUF_WIDTH, CONFIG_LCD_BUF_HIGHT, send_buffer);
-    xStatus = xQueueSendToBack( xqueue1, &send_buffer, xTicksToWait );
-    //ESP_LOG_BUFFER_HEX(TAG, send_buffer, 16);
-    //vTaskDelay(20 / portTICK_RATE_MS);
 }
 
 void lcd_draw(void *pvParameters)
@@ -219,39 +187,62 @@ void lcd_draw(void *pvParameters)
     vTaskDelay(4000 / portTICK_RATE_MS); 
     uint8_t *output_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL |  MALLOC_CAP_8BIT); //MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL |
     assert(output_buffer != NULL);
-    //xStatus = xQueueReceive( xqueue1, &get_str, xTicksToWait );
-    setup();
-    //xqueue2 = xQueueCreate( TRANSFER_BUFFER, sizeof( Data) );
-    //char get_str[16];
+    print_heapsize();
     xqueue2 = xQueueCreate( 1, sizeof(Data));
-    //int y = CONFIG_LCD_BUF_HIGHT;
-    //esp_task_wdt_add(NULL);
+    int cnt = 0;
     while(1)
     {
-        //esp_task_wdt_reset();
-        vTaskDelay(10 / portTICK_RATE_MS);
-        //xStatus = xQueueReceive( xqueue1, &get_str, xTicksToWait );  //从队列2中取一条数据
-        //xStatus = xQueueReceive( xqueue1, &output_buffer, xTicksToWait );
+        cnt++;
+        if(cnt%100 == 1)
+            vTaskDelay(10 / portTICK_RATE_MS);
         xStatus = xQueueReceive( xqueue2, &data_get, xTicksToWait );
-        //y = data_get.sender;
-        //memcpy(output_buffer,data_get.msg,DEMO_MAX_TRANFER_SIZE);
         if(xStatus == pdPASS){
             // printf("data_get.sender:%d ",data_get.sender);
             // printf("data_get.msg:%s ",data_get.msg);
+            //app_jpegdec((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
             mjpegdraw((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
             free(data_get.msg); 
-            ESP_LOGI(TAG1, "draw_lcd");
-            // lcd_write_bitmap(0,y-CONFIG_LCD_BUF_HIGHT, CONFIG_LCD_BUF_WIDTH, CONFIG_LCD_BUF_HIGHT, output_buffer);
-            // // printf("receive:y=%d\n", y);
-            // // ESP_LOG_BUFFER_HEX(TAG1, output_buffer, 16);
-            // if(y >= 480)
-            //     y = CONFIG_LCD_BUF_HIGHT;
-            // else
-            //     y = y + CONFIG_LCD_BUF_HIGHT;
+            //ESP_LOGI(TAG1, "draw_lcd");
         }
     }   
-    //esp_task_wdt_delete(NULL);     
+
 }
+
+void frame_send(int y_lineindex,uint8_t *send_buffer)
+{
+    BaseType_t xStatus;
+    const TickType_t xTicksToWait = pdMS_TO_TICKS(100);
+
+    xStatus = xQueueSendToFront( xqueue1, &send_buffer, xTicksToWait );
+
+}
+void JPEGDraw(JPEGDRAW *pDraw)
+{
+    lcd_write_bitmap(pDraw->x,pDraw->y,pDraw->iWidth,pDraw->iHeight,pDraw->pPixels);
+} 
+
+
+void app_jpegdec(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb)
+{
+    int rc;
+    rc = JPEG_openRAM(&jpg, mjpegbuffer, size, JPEGDraw);
+    if (rc)
+    {
+        jpg.pDitherBuffer = outbuffer;//
+        jpg.ucPixelType = RGB565_LITTLE_ENDIAN;//RGB565_BIG_ENDIAN;//RGB565_LITTLE_ENDIAN;//FOUR_BIT_DITHERED;   
+	if (JPEG_decode(&jpg, 0, 0, JPEG_SCALE_HALF)) { // full size   
+        //printf("full sized decode \n");
+	}
+	else
+	{
+        printf("Decode failed, last error = %d\n", JPEG_getLastError(&jpg));
+	    return 0;
+	}
+	JPEG_close(&jpg);
+    }
+}
+
+
 
 
 esp_err_t _http_event_handler(esp_http_client_event_t *evt)

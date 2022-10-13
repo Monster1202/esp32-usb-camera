@@ -1,8 +1,8 @@
 {
     "project_name":       "bootloader",
     "project_path":       "/home/yuan/esp/esp-idf/components/bootloader/subproject",
-    "build_dir":          "/home/yuan/esp/esp32-usb-camera/build/bootloader",
-    "config_file":        "/home/yuan/esp/esp32-usb-camera/sdkconfig",
+    "build_dir":          "/home/yuan/esp/esp32-video-remote/build/bootloader",
+    "config_file":        "/home/yuan/esp/esp32-video-remote/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",

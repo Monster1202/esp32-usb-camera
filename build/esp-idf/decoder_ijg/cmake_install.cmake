@@ -1,4 +1,4 @@
-# Install script for directory: /home/yuan/esp/esp32-usb-camera/components/decoder_ijg
+# Install script for directory: /home/yuan/esp/esp32-video-remote/components/decoder_ijg
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -7,9 +7,9 @@ set(EXTRA_COMPONENT_DIRS
     components
     components/usb
     components/http_client
-    components/lvgl
     components/mqtt_app
+    components/ota_app
     )
 add_compile_options(-fdiagnostics-color=always)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(usb_camera)
+project(esp32-video-remote)

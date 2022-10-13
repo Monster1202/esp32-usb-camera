@@ -1,4 +1,4 @@
-# Install script for directory: /home/yuan/esp/esp32-usb-camera/components/usb/esp_usbh_cdc
+# Install script for directory: /home/yuan/esp/esp32-video-remote/components/usb/esp_usbh_cdc
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

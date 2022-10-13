@@ -1,4 +1,4 @@
-# Install script for directory: /home/yuan/esp/esp32-usb-camera/components/libhelix-mp3
+# Install script for directory: /home/yuan/esp/esp32-video-remote/components/libhelix-mp3
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

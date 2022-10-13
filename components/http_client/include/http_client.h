@@ -2,8 +2,11 @@
 
 #include "esp_err.h"
 
+//#define __cplusplus
+
 #ifdef __cplusplus
 extern "C" {
+
 #endif
 
 void http_test_task(void *pvParameters);  //

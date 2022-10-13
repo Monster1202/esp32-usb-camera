@@ -229,8 +229,8 @@ uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_w
     cinfo.out_color_space = JCS_RGB;
     // cinfo.image_width = 400;
     // cinfo.image_height = 300;
-     cinfo.scale_num = 1;
-     cinfo.scale_denom = 1;    
+    //   cinfo.scale_num = 1;
+    //   cinfo.scale_denom = 2;      //associtated with CONFIG_LCD_BUF_WIDTH
     /* Step 5: Start decompressor */
 
     (void) jpeg_start_decompress(&cinfo);
@@ -272,8 +272,7 @@ uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_w
         uint32_t y = cinfo.output_scanline;
         //uint16_t *out = NULL;
         uint16_t *out = (uint16_t *)outbuffer;// + (y * cinfo.output_width);
-
-        for (index = 0; index < cinfo.output_width; index++) {
+        for (index = 0; index < cinfo.output_width*WIDTH_PLUS; index++) {
         uint16_t c = ((*inbuffer) >> 3) << 11 | ((*(inbuffer + 1)) >> 2) << 5 | (*(inbuffer + 2)) >> 3;
 #if 0
 #ifdef CONFIG_LCD_INTERFACE_I2S
@@ -284,16 +283,29 @@ uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_w
 #else   //不需要大小端调换
         out[index_last+index] = c;
 #endif
+#if HIGHT_PLUS == 2
+        out[index_last+index+CONFIG_LCD_BUF_WIDTH*2] = c;
+#endif
+#if WIDTH_PLUS == 2
+        index++;
+        out[index_last+index] = c;
+#endif
+#if HIGHT_PLUS == 2        
+        out[index_last+index+CONFIG_LCD_BUF_WIDTH*2] = c;
+#endif
         inbuffer += 3;
         }
 
-        index_last += index;
+        index_last += index*HIGHT_PLUS;
 
-        if(!(y % CONFIG_LCD_BUF_HIGHT) || index_last >= (CONFIG_LCD_BUF_HIGHT*cinfo.output_width)){
-            lcd_cb(0, y-CONFIG_LCD_BUF_HIGHT, CONFIG_LCD_BUF_WIDTH, CONFIG_LCD_BUF_HIGHT, outbuffer);
-            //printf("y=%d, index_last=%d\n", y, index_last);
+        if(!(y % CONFIG_LCD_BUF_HIGHT) || index_last >= (CONFIG_LCD_BUF_HIGHT*cinfo.output_width*WIDTH_PLUS*HIGHT_PLUS)){
+            // while(y){
+            //     lcd_cb(0, (y-CONFIG_LCD_BUF_HIGHT)*HIGHT_PLUS, CONFIG_LCD_BUF_WIDTH*WIDTH_PLUS, CONFIG_LCD_BUF_HIGHT*HIGHT_PLUS, outbuffer);
+            //     y = y+CONFIG_LCD_BUF_HIGHT;
+            // }
+            lcd_cb(0, (y-CONFIG_LCD_BUF_HIGHT)*HIGHT_PLUS, CONFIG_LCD_BUF_WIDTH*WIDTH_PLUS, CONFIG_LCD_BUF_HIGHT*HIGHT_PLUS, outbuffer);
             //frame_send(y,outbuffer);
-            
+            //printf("y=%d, index_last=%d\n", y, index_last);
             index_last = 0;
         }
 
