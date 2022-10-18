@@ -33,7 +33,7 @@
 #include "mqtt_app.h"
 #include "para_list.h"
 #include "gpio_ctrl.h"
-#include "esp32_perfmon.h"
+//#include "esp32_perfmon.h"
 
 #include "ota_app.h"
 
@@ -72,8 +72,8 @@ void app_main(void)
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 
-    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 20000, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
-    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 20000, (void *)(jpeg_buf), 24, NULL,  0);
+    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
+    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  0);
 
     native_ota_app();
     mqtt_init();

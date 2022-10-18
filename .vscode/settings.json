@@ -83,7 +83,8 @@
         "typeindex": "c",
         "typeinfo": "c",
         "geometry": "c",
-        "lu": "c"
+        "lu": "c",
+        "stdio.h": "c"
     },
     "idf.adapterTargetName": "esp32s3",
     "idf.flashType": "UART",

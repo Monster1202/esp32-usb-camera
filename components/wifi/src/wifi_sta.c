@@ -17,7 +17,7 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID "yyg"//"CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  ////
+#define EXAMPLE_ESP_WIFI_SSID "CLEANING-SYSTEM"//"SHKJ2020"   //CONFIG_ESP_WIFI_SSID  ////
 #define EXAMPLE_ESP_WIFI_PASS "12345678"//"shkj1234."  //CONFIG_ESP_WIFI_PASSWORD  //
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  150//CONFIG_ESP_MAXIMUM_RETRY

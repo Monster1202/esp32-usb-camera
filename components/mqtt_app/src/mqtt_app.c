@@ -184,7 +184,7 @@ void mqtt_init(void)
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
 
-    esp_log_level_set("*", ESP_LOG_INFO);//  CONFIG_LOG_COLORS  
+    esp_log_level_set("*", ESP_LOG_INFO);//  CONFIG_LOG_COLORS  ESP_LOG_ERROR
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
     esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_INFO);////ESP_LOG_DEBUG ESP_LOG_INFO ESP_LOG_WARN
     esp_log_level_set("TRANSPORT_BASE", ESP_LOG_VERBOSE);

@@ -297,7 +297,9 @@ uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_w
         }
 
         index_last += index*HIGHT_PLUS;
-
+        // if(!(y%CONFIG_LCD_BUF_HIGHT))
+        //     printf("y=%d, index_last=%d\n", y, index_last);
+        frame_send(y,outbuffer);
         if(!(y % CONFIG_LCD_BUF_HIGHT) || index_last >= (CONFIG_LCD_BUF_HIGHT*cinfo.output_width*WIDTH_PLUS*HIGHT_PLUS)){
             // while(y){
             //     lcd_cb(0, (y-CONFIG_LCD_BUF_HIGHT)*HIGHT_PLUS, CONFIG_LCD_BUF_WIDTH*WIDTH_PLUS, CONFIG_LCD_BUF_HIGHT*HIGHT_PLUS, outbuffer);
@@ -306,6 +308,7 @@ uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_w
             lcd_cb(0, (y-CONFIG_LCD_BUF_HIGHT)*HIGHT_PLUS, CONFIG_LCD_BUF_WIDTH*WIDTH_PLUS, CONFIG_LCD_BUF_HIGHT*HIGHT_PLUS, outbuffer);
             //frame_send(y,outbuffer);
             //printf("y=%d, index_last=%d\n", y, index_last);
+            
             index_last = 0;
         }
 

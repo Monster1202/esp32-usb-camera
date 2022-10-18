@@ -231,6 +231,8 @@ int8_t flash_read_parameter(void)
     printf("connection_para.wifi_pass:%s\r\n",connection_para.wifi_pass);
     printf("connection_para.broker_url:%s\r\n",connection_para.broker_url);
     printf("connection_para.update_url:%s\r\n",connection_para.update_url);
+    //printf("connection_para.wifi_ssid[0]:%d,connection_para.wifi_pass[0] :%d",connection_para.wifi_ssid[0],connection_para.wifi_pass[0] );
+    
     if(connection_para.wifi_ssid[0] == 0xff && connection_para.wifi_pass[0] == 0xff){
         printf("connection_para == ff then write inital parameter");
         wifi_url_inital_set_para();

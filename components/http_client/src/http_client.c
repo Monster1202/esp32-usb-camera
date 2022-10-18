@@ -119,7 +119,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     //content_length = 104; //default : 0 //streamer sprintf Content-Type: image/jpeg\r\n" "Content-Length: %08d\r\n"....
     static int counter = 0;
     if(counter%600 == 0)
-        printf("content_length:%d", content_length);
+        ESP_LOGI(TAG, "content_length:%d", content_length);
     content_length = 104;//306;  //105 104
     int total_read_len = 0, read_len;
     int head_len = 0;
@@ -150,7 +150,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     
     counter++;
     if(counter%30 == 1)
-        printf("content_length:%d", content_length);
+        ESP_LOGI(TAG1,"content_length:%d", content_length);
     // ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %d",
     //             esp_http_client_get_status_code(client),
     //             content_length);   //esp_http_client_get_content_length(client)
@@ -172,8 +172,8 @@ void http_test_task(void *pvParameters)
     //xqueue2 = xQueueCreate( 1, sizeof(Data));
     while(1)
     {    
-        //vTaskDelay(20 / portTICK_RATE_MS);
-        http_perform_as_stream_reader(pvParameters,0);      
+        http_perform_as_stream_reader(pvParameters,0);   
+        vTaskDelay(140 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }
 
@@ -192,15 +192,18 @@ void lcd_draw(void *pvParameters)
     int cnt = 0;
     while(1)
     {
-        cnt++;
-        if(cnt%100 == 1)
-            vTaskDelay(10 / portTICK_RATE_MS);
+        // cnt++;
+        // if(cnt%100 == 1)
+        //     vTaskDelay(10 / portTICK_RATE_MS);
         xStatus = xQueueReceive( xqueue2, &data_get, xTicksToWait );
         if(xStatus == pdPASS){
             // printf("data_get.sender:%d ",data_get.sender);
             // printf("data_get.msg:%s ",data_get.msg);
             //app_jpegdec((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
+
             mjpegdraw((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
+            vTaskDelay(20 / portTICK_RATE_MS);
+
             free(data_get.msg); 
             //ESP_LOGI(TAG1, "draw_lcd");
         }
@@ -210,11 +213,14 @@ void lcd_draw(void *pvParameters)
 
 void frame_send(int y_lineindex,uint8_t *send_buffer)
 {
-    BaseType_t xStatus;
-    const TickType_t xTicksToWait = pdMS_TO_TICKS(100);
+    // vTaskDelay(10 / portTICK_RATE_MS);   //too long
+    int i = 0;
+    while(i<2000)    //1000 ok  
+        i++;
+    // BaseType_t xStatus;
+    // const TickType_t xTicksToWait = pdMS_TO_TICKS(100);
 
-    xStatus = xQueueSendToFront( xqueue1, &send_buffer, xTicksToWait );
-
+    // xStatus = xQueueSendToFront( xqueue1, &send_buffer, xTicksToWait )
 }
 void JPEGDraw(JPEGDRAW *pDraw)
 {

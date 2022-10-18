@@ -12,7 +12,7 @@ extern "C" {
 #define HIGHT_PLUS 2
 
 #define CONFIG_LCD_BUF_WIDTH 320
-#define CONFIG_LCD_BUF_HIGHT (48/HIGHT_PLUS)  //48
+#define CONFIG_LCD_BUF_HIGHT (48/HIGHT_PLUS)  //48   8/2 mohu
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
 void print_heapsize(void);
 /* USB Camera Descriptors Related MACROS,
@@ -57,7 +57,7 @@ then hardcode the related MACROS below
 #define DESCRIPTOR_STREAM_INTERFACE_ALT_MPS_512  4
 
 #define DESCRIPTOR_STREAM_ISOC_ENDPOINT_ADDR 0x82     //EndpointAddress
-// #else  //config 3
+// #else  //config 3   USB-CAMERA
 // #define DESCRIPTOR_CONFIGURATION_INDEX 1          
 // #define DESCRIPTOR_FORMAT_MJPEG_INDEX  1     //FormatIndex
 

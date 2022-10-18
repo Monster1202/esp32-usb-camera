@@ -69,7 +69,7 @@ esp_err_t bsp_lcd_init(void)
     esp_lcd_panel_io_handle_t io_handle = NULL;
     esp_lcd_panel_io_i80_config_t io_config = {
         .cs_gpio_num = GPIO_LCD_CS,
-        .pclk_hz = 8000000, // 测试14MHz以上花屏 10MHZ=26.18fps   13MHZ=34.04fps
+        .pclk_hz = 8000000, // 测试14MHz以上花屏 10MHZ=26.18fps   13MHZ=34.04fps   7~10mhz Ok
         .trans_queue_depth = 10,
         .dc_levels = {
             .dc_idle_level = 0,

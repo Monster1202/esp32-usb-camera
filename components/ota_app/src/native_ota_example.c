@@ -357,9 +357,9 @@ void native_ota_app(void)
     /* Ensure to disable any WiFi power save mode, this allows best throughput
      * and hence timings for overall OTA operation.
      */
-    esp_wifi_set_ps(WIFI_PS_NONE);
+    //esp_wifi_set_ps(WIFI_PS_NONE);
 #endif // CONFIG_EXAMPLE_CONNECT_WIFI
 
-    xTaskCreate(&ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&ota_example_task, "ota_example_task", 8192, NULL, 6, NULL);
 }
 

@@ -27,7 +27,7 @@ typedef struct {
 
 #define BSP_EXT_IO_DEFAULT_CONFIG() {   \
         .motion_int = 1,                \
-        .ext_io2 = 0,                   \
+        .ext_io2 = 1,                   \
         .ext_io0 = 1,                   \
         .ext_io1 = 1,                   \
         .lcd_bl = 0,                    \
@@ -38,9 +38,9 @@ typedef struct {
 
 #define BSP_EXT_IO_DEFAULT_LEVEL() {    \
         .motion_int = 1,                \
-        .ext_io2 = 0,                   \
-        .ext_io0 = 0,                   \
-        .ext_io1 = 0,                   \
+        .ext_io2 = 1,                   \
+        .ext_io0 = 1,                   \
+        .ext_io1 = 1,                   \
         .lcd_bl = 1,                    \
         .audio_pa = 1,                  \
         .tp_int = 1,                    \
