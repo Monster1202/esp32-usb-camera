@@ -57,7 +57,7 @@ then hardcode the related MACROS below
 #define DESCRIPTOR_STREAM_INTERFACE_ALT_MPS_512  4
 
 #define DESCRIPTOR_STREAM_ISOC_ENDPOINT_ADDR 0x82     //EndpointAddress
-// #else  //config 3   USB-CAMERA
+// #else  //config 3
 // #define DESCRIPTOR_CONFIGURATION_INDEX 1          
 // #define DESCRIPTOR_FORMAT_MJPEG_INDEX  1     //FormatIndex
 

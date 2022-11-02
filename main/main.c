@@ -63,12 +63,13 @@ void app_main(void)
     /* Initialize LCD */
     ESP_ERROR_CHECK(bsp_lcd_init());
     lcd_clear_fast(lcd_panel, COLOR_BLACK);
-    lcd_draw_picture_test(lcd_panel);
+    lcd_draw_picture_t(lcd_panel);
     //xTaskCreatePinnedToCore(Task1, "Task1", 4096, NULL, 1, NULL,  0);
 
     para_init();
     gpio_init();
     wifi_connect();
+    xTaskCreate(wifi_scan, "wifi_scan", 4096, NULL, 6, NULL);
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 

@@ -108,6 +108,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err;
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
+        printf("config.url:%s",config.url);
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
@@ -173,7 +174,7 @@ void http_test_task(void *pvParameters)
     while(1)
     {    
         http_perform_as_stream_reader(pvParameters,0);   
-        vTaskDelay(140 / portTICK_RATE_MS);     //50ms   14FPS   
+        vTaskDelay(30 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }
 
@@ -202,7 +203,7 @@ void lcd_draw(void *pvParameters)
             //app_jpegdec((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
 
             mjpegdraw((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(10 / portTICK_RATE_MS);
 
             free(data_get.msg); 
             //ESP_LOGI(TAG1, "draw_lcd");
@@ -215,7 +216,7 @@ void frame_send(int y_lineindex,uint8_t *send_buffer)
 {
     // vTaskDelay(10 / portTICK_RATE_MS);   //too long
     int i = 0;
-    while(i<2000)    //1000 ok  
+    while(i<3000)    //1000 ok  
         i++;
     // BaseType_t xStatus;
     // const TickType_t xTicksToWait = pdMS_TO_TICKS(100);
