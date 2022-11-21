@@ -26,7 +26,7 @@
 (0b1010100)   ADC121C021
 (0b1010100)   ADC101C021
 (0b1010000)   ADC101C027 */
-uint8_t ADC_I2C_ADDR[2] = {0x54, 0x50};
+uint8_t ADC_I2C_ADDR[2] = { 0x50 , 0x54};
 
 
 #define CONVERSION_RESULT_REG       (0b00000000)
@@ -107,7 +107,9 @@ esp_err_t adc121_get_config(adc121_configuration_reg_t *cfg)
 esp_err_t adc121_get_converted_value(uint16_t *value)
 {
     uint8_t reg_val[2];
+    printf("adc121_read_bytes\r\n");
     adc121_read_bytes(CONVERSION_RESULT_REG, sizeof(uint16_t), reg_val);
     *value = ((reg_val[0] & 0x0F) << 8) + (reg_val[1]);
+    printf("value=%d\r\n",*value);
     return ESP_OK;
 }

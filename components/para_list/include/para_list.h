@@ -16,9 +16,9 @@ extern "C" {
 
 
 #define BACKUP_MQTT_BROKER_URL     "mqtt://10.42.0.1"    //"mqtt://172.16.170.48"  //
-#define BACKUP_EXAMPLE_ESP_WIFI_SSID      "CLEANING-SYSTEM"  //"yyg" //"SHKJ2020" //  
+#define BACKUP_EXAMPLE_ESP_WIFI_SSID       "CLEANING-SYSTEM" //"yyg" //"SHKJ2020" //   //
 #define BACKUP_EXAMPLE_ESP_WIFI_PASS      "12345678"   //  "12345678" // "shkj1234." //
-#define http_get_URL     "http://10.42.0.1:8080/?action=stream" // "http://172.16.170.48:8080/?action=stream"  //"http://172.16.170.189:8080/?action=stream",////"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",
+#define http_get_URL     "http://10.42.0.1:8080/?action=stream" //"http://172.16.170.189:8090/test.mjpg" // "http://172.16.170.48:8080/?action=stream"  //"http://172.16.170.189:8080/?action=stream",////"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",
 
 typedef struct
 {
@@ -145,6 +145,8 @@ typedef struct
     uint8_t nozzle;      //command down
     uint8_t centralizer;
     uint8_t rotation;
+    uint8_t water;
+    uint8_t pressure_alarm;
     uint8_t heater;
     uint8_t mode;
     uint8_t angle;
@@ -153,6 +155,8 @@ typedef struct
     int8_t rssi;
     uint8_t wifi_connection; 
     uint8_t air_pump;
+    uint16_t battery;
+    uint8_t sta_brush;
 }PARAMETER_REMOTE;
 
 void parameter_write_version(char *str_version);
@@ -193,7 +197,10 @@ uint32_t parameter_read_debug(void);
 void parameter_write_air_pump(uint8_t value);
 uint8_t parameter_read_air_pump(void);
 
-
+void parameter_write_battery(uint16_t value);
+uint16_t parameter_read_battery(void);
+void parameter_write_sta_brush(uint8_t value);
+uint8_t parameter_read_sta_brush(void);
 
 #ifdef __cplusplus
 }

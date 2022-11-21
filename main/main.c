@@ -36,10 +36,14 @@
 //#include "esp32_perfmon.h"
 
 #include "ota_app.h"
+#include "touch_panel.h"
+#include "lcd_icon.h"
+#include "adc121.h"
+#include "bat_adc.h"
 
 static const char *TAG = "main";
 
-#define BOOT_ANIMATION_MAX_SIZE (130 * 1024)  //80 will cause mqtt init error
+#define BOOT_ANIMATION_MAX_SIZE (80 * 1024)  //80 will cause mqtt init error
 //esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x_start, int y_start, int x_end, int y_end, const void *color_data)
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data)
 {
@@ -63,27 +67,48 @@ void app_main(void)
     /* Initialize LCD */
     ESP_ERROR_CHECK(bsp_lcd_init());
     lcd_clear_fast(lcd_panel, COLOR_BLACK);
-    lcd_draw_picture_t(lcd_panel);
+    //lcd_draw_picture_t(lcd_panel);
+    //lcd_draw_picture_test(lcd_panel);
     //xTaskCreatePinnedToCore(Task1, "Task1", 4096, NULL, 1, NULL,  0);
 
     para_init();
     gpio_init();
+
+    xTaskCreatePinnedToCore(lcd_icon_task, "lcd_icon_task", 8192, NULL, 11, NULL,  0);
+    //xTaskCreatePinnedToCore(touch_input, "touch_input", 4096, NULL, 10, NULL,  0);
     wifi_connect();
     xTaskCreate(wifi_scan, "wifi_scan", 4096, NULL, 6, NULL);
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 
-    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
-    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  0);
+    //xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
+    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  1);
 
-    native_ota_app();
-    mqtt_init();
-    
+     native_ota_app();
+     mqtt_init();
+
+
+    //uint16_t *pixels = heap_caps_malloc((640 * 12) * sizeof(uint16_t), MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
     //perfmon_start(); //print cpu usage
-    //int cnt = 0;
+    int cnt = 0;
+    //adc121_init();
+    //adc_init();
+    //uint16_t battery = 0;
     while (1) {
+        //  lcd_draw_picture_t(lcd_panel,pixels);
+        //  vTaskDelay(20 / portTICK_RATE_MS);
+        // cnt++;
+        // if(cnt % 200 == 1)
+
         print_heapsize();
         vTaskDelay(20000 / portTICK_RATE_MS);
+        
+        // cnt = adc_get_voltage();
+        // parameter_write_battery(cnt);
+        // printf("bat=%d\r\n",cnt);
+        // adc121_get_converted_value(battery);
+        // //parameter_write_battery(battery);
+        // printf("bat=%d\r\n",battery);
         /* task monitor code if necessary */
     }
 }

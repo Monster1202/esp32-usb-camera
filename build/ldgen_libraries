@@ -75,6 +75,7 @@
 /home/yuan/esp/esp32-video-remote/build/esp-idf/i2c_devices/libi2c_devices.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/lcd/liblcd.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/bsp/libbsp.a
+/home/yuan/esp/esp32-video-remote/build/esp-idf/adc/libadc.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/cJSON/libcJSON.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/codec/libcodec.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/jpegdec/libjpegdec.a
@@ -87,9 +88,11 @@
 /home/yuan/esp/esp32-video-remote/build/esp-idf/mqtt_app/libmqtt_app.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/gpio_ctrl/libgpio_ctrl.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/key/libkey.a
+/home/yuan/esp/esp32-video-remote/build/esp-idf/lcd_icon/liblcd_icon.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/libhelix-mp3/liblibhelix-mp3.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/ota_app/libota_app.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/sr_ringbuf/libsr_ringbuf.a
+/home/yuan/esp/esp32-video-remote/build/esp-idf/touch_panel/libtouch_panel.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/ws2812/libws2812.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/esp_usbh_cdc/libesp_usbh_cdc.a
 /home/yuan/esp/esp32-video-remote/build/esp-idf/uvc_stream/libuvc_stream.a

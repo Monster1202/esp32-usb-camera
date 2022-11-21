@@ -1641,6 +1641,25 @@ rule C_STATIC_LIBRARY_LINKER____idf_bsp_
 #############################################
 # Rule for compiling C files.
 
+rule C_COMPILER____idf_adc_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for linking C static library.
+
+rule C_STATIC_LIBRARY_LINKER____idf_adc_
+  command = $PRE_LINK && /home/yuan/.espressif/tools/cmake/3.20.3/bin/cmake -E rm -f $TARGET_FILE && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ar qc $TARGET_FILE $LINK_FLAGS $in && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ranlib $TARGET_FILE && $POST_BUILD
+  description = Linking C static library $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for compiling C files.
+
 rule C_COMPILER____idf_cJSON_
   depfile = $DEP_FILE
   deps = gcc
@@ -1869,6 +1888,25 @@ rule C_STATIC_LIBRARY_LINKER____idf_key_
 #############################################
 # Rule for compiling C files.
 
+rule C_COMPILER____idf_lcd_icon_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for linking C static library.
+
+rule C_STATIC_LIBRARY_LINKER____idf_lcd_icon_
+  command = $PRE_LINK && /home/yuan/.espressif/tools/cmake/3.20.3/bin/cmake -E rm -f $TARGET_FILE && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ar qc $TARGET_FILE $LINK_FLAGS $in && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ranlib $TARGET_FILE && $POST_BUILD
+  description = Linking C static library $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for compiling C files.
+
 rule C_COMPILER____idf_libhelix-mp3_
   depfile = $DEP_FILE
   deps = gcc
@@ -1918,6 +1956,25 @@ rule C_COMPILER____idf_sr_ringbuf_
 # Rule for linking C static library.
 
 rule C_STATIC_LIBRARY_LINKER____idf_sr_ringbuf_
+  command = $PRE_LINK && /home/yuan/.espressif/tools/cmake/3.20.3/bin/cmake -E rm -f $TARGET_FILE && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ar qc $TARGET_FILE $LINK_FLAGS $in && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ranlib $TARGET_FILE && $POST_BUILD
+  description = Linking C static library $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for compiling C files.
+
+rule C_COMPILER____idf_touch_panel_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for linking C static library.
+
+rule C_STATIC_LIBRARY_LINKER____idf_touch_panel_
   command = $PRE_LINK && /home/yuan/.espressif/tools/cmake/3.20.3/bin/cmake -E rm -f $TARGET_FILE && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ar qc $TARGET_FILE $LINK_FLAGS $in && /home/yuan/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ranlib $TARGET_FILE && $POST_BUILD
   description = Linking C static library $TARGET_FILE
   restat = $RESTAT

@@ -75,6 +75,7 @@ $<TARGET_FILE:__idf_i2c_bus>
 $<TARGET_FILE:__idf_i2c_devices>
 $<TARGET_FILE:__idf_lcd>
 $<TARGET_FILE:__idf_bsp>
+$<TARGET_FILE:__idf_adc>
 $<TARGET_FILE:__idf_cJSON>
 $<TARGET_FILE:__idf_codec>
 $<TARGET_FILE:__idf_jpegdec>
@@ -87,9 +88,11 @@ $<TARGET_FILE:__idf_wifi>
 $<TARGET_FILE:__idf_mqtt_app>
 $<TARGET_FILE:__idf_gpio_ctrl>
 $<TARGET_FILE:__idf_key>
+$<TARGET_FILE:__idf_lcd_icon>
 $<TARGET_FILE:__idf_libhelix-mp3>
 $<TARGET_FILE:__idf_ota_app>
 $<TARGET_FILE:__idf_sr_ringbuf>
+$<TARGET_FILE:__idf_touch_panel>
 $<TARGET_FILE:__idf_ws2812>
 $<TARGET_FILE:__idf_esp_usbh_cdc>
 $<TARGET_FILE:__idf_uvc_stream>

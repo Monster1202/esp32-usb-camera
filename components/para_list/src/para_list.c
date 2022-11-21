@@ -106,9 +106,11 @@ void para_init(void)
         #else
             //remote_para.uuid = id;
             strcpy(remote_para.uuid,mac_addr);
-            remote_para.nozzle = 0;
-            remote_para.centralizer = 0;
-            remote_para.rotation = 0;
+            remote_para.nozzle = 2;
+            remote_para.centralizer = 2;
+            remote_para.rotation = 2;
+            remote_para.pressure_alarm = 1;
+            remote_para.water = 1;
             remote_para.status = 1;
             remote_para.mode = 0;
             remote_para.angle = 0;
@@ -116,7 +118,9 @@ void para_init(void)
             strcpy(remote_para.msg_id,"msg_id");
             strcpy(remote_para.version,"1.0.0.0");
             remote_para.rssi = 0;
-            remote_para.wifi_connection = 0;
+            remote_para.wifi_connection = 1;
+            remote_para.battery = 500;
+            remote_para.sta_brush = 2;
         #endif
     #endif
 }
@@ -233,10 +237,10 @@ int8_t flash_read_parameter(void)
     printf("connection_para.update_url:%s\r\n",connection_para.update_url);
     //printf("connection_para.wifi_ssid[0]:%d,connection_para.wifi_pass[0] :%d",connection_para.wifi_ssid[0],connection_para.wifi_pass[0] );
     
-    //if(connection_para.wifi_ssid[0] == 0xff && connection_para.wifi_pass[0] == 0xff){
+    if(connection_para.wifi_ssid[0] == 0xff && connection_para.wifi_pass[0] == 0xff){
         printf("connection_para == ff then write inital parameter");
         wifi_url_inital_set_para();
-    //}
+    }
     // if(connection_para.wifi_ssid[0] == 0x00 && connection_para.wifi_pass[0] == 0x00){
     //     printf("connection_para == 00 then write inital parameter");
     //     wifi_url_inital_set_para();
@@ -293,7 +297,15 @@ void parameter_write_water(uint8_t value)
 
 uint8_t parameter_read_water(void)
 {
-    return brush_para.water;
+#ifdef DEVICE_TYPE_BRUSH
+return brush_para.water;
+#endif
+#ifdef DEVICE_TYPE_BLISTER
+return blister_para.water;
+#endif
+#ifdef DEVICE_TYPE_REMOTE
+return remote_para.water;
+#endif
 }
 
 void parameter_write_pressure_alarm(uint8_t value)
@@ -304,7 +316,15 @@ void parameter_write_pressure_alarm(uint8_t value)
 
 uint8_t parameter_read_pressure_alarm(void)
 {
-    return brush_para.pressure_alarm;
+#ifdef DEVICE_TYPE_BRUSH
+return brush_para.pressure_alarm;
+#endif
+#ifdef DEVICE_TYPE_BLISTER
+return blister_para.pressure_alarm;
+#endif
+#ifdef DEVICE_TYPE_REMOTE
+return remote_para.pressure_alarm;
+#endif
 }
 
 void parameter_write_liquid_alarm(uint8_t value)
@@ -568,4 +588,25 @@ uint8_t parameter_read_air_pump(void)
     #ifdef DEVICE_TYPE_REMOTE
     return remote_para.air_pump;
     #endif
+}
+
+
+void parameter_write_battery(uint16_t value)
+{  
+    remote_para.battery = value;
+}
+
+uint16_t parameter_read_battery(void)
+{
+    return remote_para.battery;
+}
+
+void parameter_write_sta_brush(uint8_t value)
+{  
+    remote_para.sta_brush = value;
+}
+
+uint8_t parameter_read_sta_brush(void)
+{
+    return remote_para.sta_brush;
 }

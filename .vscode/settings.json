@@ -84,9 +84,11 @@
         "typeinfo": "c",
         "geometry": "c",
         "lu": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "ota_app.h": "c",
+        "lcd_icon.h": "c"
     },
     "idf.adapterTargetName": "esp32s3",
     "idf.flashType": "UART",
-    "idf.port": "/dev/ttyUSB0"
+    "idf.port": "/dev/ttyUSB1"
 }

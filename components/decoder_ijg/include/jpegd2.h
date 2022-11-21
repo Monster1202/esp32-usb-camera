@@ -16,7 +16,7 @@ extern "C" {
 
 typedef bool (*lcd_write_cb)(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
 uint8_t mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb);
-
+void mjpegdraw_icon(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb,uint32_t x0,uint32_t y0,uint32_t i_width,uint32_t i_hight);
 #ifdef __cplusplus 
 }
 #endif

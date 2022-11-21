@@ -204,7 +204,12 @@ void data_process(char *data)
         return 0;
     }
 
-
+    cJSON *json_brush_status = cJSON_GetObjectItem(json_str_xy, "status");
+    if(json_brush_status != NULL && json_brush_status->type == cJSON_Number) {
+        ESP_LOGI(TAG, "status = %d", json_brush_status->valueint);
+        //remote_stop_io_out(json_brush_status->valueint,1);
+        parameter_write_sta_brush(json_brush_status->valueint);
+    }
     cJSON *json_emergency_stop = cJSON_GetObjectItem(json_str_xy, "emergency_stop");
     if(json_emergency_stop != NULL && json_emergency_stop->type == cJSON_Number) {
         ESP_LOGI(TAG, "emergency_stop = %d", json_emergency_stop->valueint);
@@ -385,6 +390,7 @@ void data_publish(char *data,uint8_t case_pub)
     else if(case_pub == 9){
         cJSON_AddNumberToObject(root, "status",remote_buf.status);
         cJSON_AddNumberToObject(root, "rssi",remote_buf.rssi);
+        cJSON_AddNumberToObject(root, "battery",remote_buf.battery);
         }
 
     char *msg = cJSON_Print(root);
